@@ -4,6 +4,13 @@ A tool that lets you auto-fill any Google Form with your saved identity.
 
 Accord is a static site that takes any Google Form link and prefills it with values from your profile — name, email, anything you've taught it. Open `/go/<form-id>`, sign in with Google, and the form opens with your details already filled in.
 
+## Try it
+
+Same form, both ways — open them side by side:
+
+- Without Accord: https://forms.gle/RqSQeNQN1FLKhKof9
+- With Accord: https://accord-ingly.netlify.app/go/RqSQeNQN1FLKhKof9
+
 ## Routes
 
 - `/` — landing page
