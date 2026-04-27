@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Auto-fill any Google Form — Accord</title>
+  <meta name="description" content="Paste any Google Form link and get an Accord URL that signs visitors in and auto-fills the form from their saved profile." />
+  <meta name="theme-color" content="#080808" />
+
+  <link rel="icon" type="image/svg+xml" href="/public/favicon.svg" />
+  <link rel="apple-touch-icon" href="/public/favicon.svg" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Auto-fill any Google Form — Accord" />
+  <meta property="og:description" content="Paste a form, get a verified-identity prefill link." />
+  <meta property="og:image" content="/public/og-image.svg" />
+
+  <link rel="stylesheet" href="/css/style.css" />
+  <style>
+    .fill-wrap {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 80px 24px 48px;
+    }
+    .fill-eyebrow {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      color: rgba(240,240,240,0.4);
+      margin-bottom: 14px;
+      text-align: center;
+    }
+    .fill-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 48px;
+      font-weight: 300;
+      letter-spacing: -0.025em;
+      line-height: 1.05;
+      text-align: center;
+      margin-bottom: 14px;
+    }
+    .fill-sub {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    .fill-card { padding: 28px; border-radius: 16px; }
+    .fill-result {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .fill-result-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      color: rgba(240,240,240,0.35);
+      margin-bottom: 8px;
+    }
+    .fill-result-link {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: rgba(240,240,240,0.9);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 14px 16px;
+      word-break: break-all;
+      user-select: all;
+      margin-bottom: 14px;
+    }
+    .fill-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .fill-actions .btn { flex: 1; min-width: 120px; justify-content: center; }
+    .fill-foot {
+      margin-top: 28px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+    .fill-foot a { color: rgba(240,240,240,0.7); text-decoration: underline; text-decoration-color: rgba(255,255,255,0.15); }
+  </style>
+</head>
+<body>
+
+<!-- Preloader -->
+<div class="preloader" id="preloader">
+  <div class="preloader-mark">a.</div>
+</div>
+
+<!-- Orb -->
+<div class="orb" style="width:600px;height:600px;background:radial-gradient(circle,rgba(255,255,255,0.02) 0%,transparent 60%);top:30%;left:50%;transform:translate(-50%,-50%);filter:blur(90px);"></div>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <a href="/" class="logo">
+    <div class="logo-mark">a.</div>
+    <span class="logo-text">Accord</span>
+  </a>
+  <a href="/dashboard" class="btn btn-ghost btn-sm" id="nav-dashboard-btn">Dashboard</a>
+</nav>
+
+<!-- Main -->
+<main class="fill-wrap">
+  <p class="fill-eyebrow">FILL ANY FORM</p>
+  <h1 class="fill-title">Auto-fill any Google Form,<br/>using Accord</h1>
+  <p class="fill-sub">
+    Paste a form URL — get back a link that signs visitors in with Google and prefills their saved profile. No setup required.
+  </p>
+
+  <div class="glass fill-card">
+    <div class="field">
+      <label class="label">Google Form URL</label>
+      <input class="input" id="fill-form-url" placeholder="https://docs.google.com/forms/d/.../viewform" autocomplete="off" autofocus />
+      <p class="field-status hidden" id="fill-status"></p>
+    </div>
+
+    <div class="fill-result hidden" id="fill-result">
+      <p class="fill-result-label" id="fill-result-label">YOUR ACCORD LINK</p>
+      <div class="fill-result-link" id="fill-result-link"></div>
+      <div class="fill-actions">
+        <button class="btn btn-ghost btn-sm" id="fill-copy-btn">Copy link</button>
+        <a class="btn btn-primary btn-sm" id="fill-open-btn" href="#" target="_blank" rel="noopener">Open it now ✦</a>
+      </div>
+    </div>
+  </div>
+
+  <p class="fill-foot">
+    Anyone with the link can use it. Each visitor's profile is private to their own Google account.<br>
+    Want to save it with a friendly alias? <a href="/dashboard">Open your dashboard →</a>
+  </p>
+</main>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<p class="app-credit">made with ❤️ by <a href="https://modka.netlify.app" target="_blank" rel="noopener">modkavartini</a></p>
+
+<script type="module" src="/js/fill.js"></script>
+</body>
+</html>

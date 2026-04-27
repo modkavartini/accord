@@ -1,0 +1,3 @@
+/go/*       /gate.html  200
+/https:/*   /gate.html  200
+/http:/*    /gate.html  200

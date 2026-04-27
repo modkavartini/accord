@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.accord.app",
+    "sha256_cert_fingerprints": [
+      "B2:EC:69:3C:CF:11:BF:D7:26:E9:A8:9A:70:A2:C9:CA:BC:52:CA:6C:FF:32:A3:92:93:60:E9:74:80:73:1D:0D"
+    ]
+  }
+}]

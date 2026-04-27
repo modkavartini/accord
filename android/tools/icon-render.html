@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,500&display=block" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; background: transparent; }
+  body { display: flex; align-items: flex-start; justify-content: flex-start; }
+  svg { display: block; }
+</style>
+</head>
+<body>
+<svg id="icon" xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 64 64">
+  <rect width="64" height="64" rx="14" ry="14" fill="#080808"/>
+  <text x="32" y="48"
+        font-family="'Cormorant Garamond', Georgia, 'Times New Roman', serif"
+        font-style="italic" font-weight="500" font-size="48"
+        fill="#f0f0f0" text-anchor="middle"
+        letter-spacing="-1">a.</text>
+</svg>
+<script>
+  // Allow size + variant to be overridden via URL query: ?size=432&variant=foreground
+  const params = new URLSearchParams(location.search);
+  const size = parseInt(params.get('size') || '512', 10);
+  const variant = params.get('variant') || 'full';
+  const svg = document.getElementById('icon');
+  svg.setAttribute('width', size);
+  svg.setAttribute('height', size);
+  if (variant === 'wordmark') {
+    // Tight "a." monogram for in-app display — minimal padding, tight letter-spacing
+    svg.setAttribute('viewBox', '0 0 100 100');
+    svg.innerHTML = `
+      <text x="50" y="78"
+            font-family="'Cormorant Garamond', Georgia, 'Times New Roman', serif"
+            font-style="italic" font-weight="500" font-size="92"
+            fill="#f0f0f0" text-anchor="middle"
+            letter-spacing="-2">a.</text>`;
+  } else if (variant === 'foreground') {
+    // Adaptive icon foreground: drop the rounded background, keep only the text.
+    // Total canvas is 108dp; safe-zone (always visible across mask shapes) is ~66dp.
+    // Italic "a." with letter-spacing renders wider than its em-box, so shift left
+    // slightly via dx and use a moderate font-size so the period stays in the safe zone.
+    svg.setAttribute('viewBox', '0 0 108 108');
+    svg.innerHTML = `
+      <text x="54" y="72" dx="-3"
+            font-family="'Cormorant Garamond', Georgia, 'Times New Roman', serif"
+            font-style="italic" font-weight="500" font-size="52"
+            fill="#f0f0f0" text-anchor="middle"
+            letter-spacing="-1">a.</text>`;
+  }
+  document.fonts.ready.then(() => {
+    document.title = 'ready';
+  });
+</script>
+</body>
+</html>

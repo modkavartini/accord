@@ -1,0 +1,49 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors / IDEs
+.vscode/
+.idea/
+*.iml
+*.swp
+*~
+
+# Claude Code local state
+.claude/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp.*
+
+# Netlify
+.netlify/
+
+# Env files (none committed today, but block any future accidents)
+.env
+.env.*
+!.env.example
+
+# Android — build artifacts and local-only config
+android/.gradle/
+android/.idea/
+android/build/
+android/app/build/
+android/captures/
+android/local.properties
+android/app/release/
+android/app/debug/
+*.apk
+*.aab
+
+# Signing material — never commit
+*.jks
+*.keystore
+*.p12
+*.pem
+key.properties
+keystore.properties

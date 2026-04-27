@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Your Profile — Accord</title>
+  <meta name="description" content="Configure the fields Accord auto-fills into Google Forms on your behalf." />
+
+  <link rel="icon" type="image/svg+xml" href="public/favicon.svg" />
+  <link rel="apple-touch-icon" href="public/favicon.svg" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Your Profile — Accord" />
+  <meta property="og:description" content="Configure the fields Accord auto-fills into Google Forms on your behalf." />
+  <meta property="og:image" content="public/og-image.svg" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .profile-main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 36px 24px 80px;
+    }
+    .profile-back {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-family: var(--mono);
+      letter-spacing: 0.04em;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 18px;
+      transition: color 0.15s;
+    }
+    .profile-back:hover { color: var(--text-dim); }
+
+    .profile-page-title {
+      font-family: var(--display);
+      font-size: 38px;
+      font-weight: 300;
+      letter-spacing: -0.025em;
+      line-height: 1.1;
+      margin-bottom: 8px;
+    }
+    .profile-page-sub {
+      font-size: 14px;
+      color: rgba(240,240,240,0.4);
+      line-height: 1.6;
+      max-width: 540px;
+      margin-bottom: 32px;
+    }
+    .profile-page-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 36px;
+      padding-top: 24px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+  </style>
+</head>
+<body>
+
+<!-- Preloader -->
+<div class="preloader" id="preloader">
+  <div class="preloader-mark">a.</div>
+</div>
+
+<!-- Orb -->
+<div class="orb" style="width:520px;height:520px;background:radial-gradient(circle,rgba(255,255,255,0.018) 0%,transparent 60%);top:-180px;left:-100px;filter:blur(80px);"></div>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <a href="/" class="logo">
+    <div class="logo-mark">a.</div>
+    <span class="logo-text">Accord</span>
+  </a>
+  <div class="user-pill" id="user-pill">
+    <div class="user-avatar" id="user-avatar"></div>
+    <span class="user-name" id="user-name">Loading…</span>
+    <div class="user-menu hidden" id="user-menu">
+      <div class="user-menu-info">
+        <p id="menu-display-name"></p>
+        <p id="menu-email"></p>
+      </div>
+      <div class="user-menu-divider"></div>
+      <button class="user-menu-btn" id="sign-out-btn">Sign out</button>
+      <button class="user-menu-btn user-menu-btn-danger" id="delete-account-btn">Delete account</button>
+    </div>
+  </div>
+</nav>
+
+<main class="profile-main">
+  <a class="profile-back" id="back-link" href="/dashboard">← Back</a>
+
+  <h1 class="profile-page-title">Your Profile</h1>
+  <p class="profile-page-sub">
+    These rules tell Accord how to fill Google Forms for you. When a form asks for "Phone Number", Accord finds the matching rule below and types in the value you saved here — so you never have to type it again.
+  </p>
+
+  <!-- Tip box (user-facing only) -->
+  <div class="tip-box">
+    <p class="tip-box-title">How it works</p>
+    <ul class="tip-list">
+      <li>Each rule represents one piece of personal info you reuse — phone, college, roll number, etc.</li>
+      <li>Pick a <strong>match type</strong>: <code>contains</code> is most forgiving, <code>equals exactly</code> is strictest.</li>
+      <li>List one or more <strong>patterns</strong> (comma-separated). Any pattern matches the question name → the rule fires.</li>
+      <li>The <strong>value</strong> is what Accord types into the field. For Name and Email, you can use your Google account info instead of a static value.</li>
+      <li>Toggle a rule off to skip it during autofill — handy if you want to leave one field blank for a particular form session.</li>
+    </ul>
+  </div>
+
+  <!-- Recommendation card for new users (hidden once all three are added) -->
+  <div class="recommend-card hidden" id="recommend-card">
+    <p class="recommend-eyebrow">★ RECOMMENDED FOR NEW ACCOUNTS</p>
+    <h3 class="recommend-title">Start with the basics</h3>
+    <p class="recommend-text">Add these three rules and Accord will already auto-fill most forms you encounter. You can edit, toggle, or delete any of them later.</p>
+    <div class="recommend-actions" id="recommend-actions"></div>
+  </div>
+
+  <div class="profile-section">
+    <p class="profile-section-title">Your fields</p>
+    <div id="profile-fields-list"></div>
+    <button class="btn btn-ghost w-full" id="add-field-btn" style="justify-content:center;margin-top:12px;">+ Add custom field</button>
+  </div>
+
+  <div class="profile-section">
+    <p class="profile-section-title">Popular presets</p>
+    <p class="profile-section-hint">One-click templates — fill in the value next.</p>
+    <div id="presets-list" class="presets-row"></div>
+  </div>
+
+  <div class="profile-page-actions">
+    <a class="btn btn-primary" id="cancel-link" href="/dashboard">Save & Continue →</a>
+  </div>
+</main>
+
+<!-- Field-edit modal -->
+<div class="modal-overlay hidden" id="field-edit-modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2 class="modal-title" id="field-edit-title">Add custom field</h2>
+      <button class="modal-close" id="field-edit-close">×</button>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:18px;">
+      <div class="field">
+        <label class="label">Label</label>
+        <input class="input" id="f-label" placeholder="e.g. Phone Number" autocomplete="off" />
+      </div>
+
+      <div class="field">
+        <label class="label">Source</label>
+        <select class="input" id="f-source">
+          <option value="value">Static value (I fill it in below)</option>
+          <option value="auth-name">My Google account name</option>
+          <option value="auth-email">My Google account email</option>
+        </select>
+        <p class="field-hint" id="f-source-hint">Accord types your saved value into the field.</p>
+      </div>
+
+      <div class="hint-fields-row" style="display:flex;gap:12px;">
+        <div class="field" style="flex:0 0 180px;">
+          <label class="label">Match type</label>
+          <select class="input" id="f-match">
+            <option value="contains">contains</option>
+            <option value="equals">equals exactly</option>
+            <option value="startsWith">starts with</option>
+            <option value="endsWith">ends with</option>
+          </select>
+        </div>
+        <div class="field" style="flex:1;">
+          <label class="label">Patterns (comma-separated)</label>
+          <input class="input mono" id="f-patterns" placeholder="Phone, Number, Contact" autocomplete="off" />
+        </div>
+      </div>
+
+      <div class="field" id="f-value-row">
+        <label class="label">Value to fill</label>
+        <input class="input" id="f-value" placeholder="9876543210" autocomplete="off" />
+      </div>
+    </div>
+
+    <div class="modal-actions" style="justify-content:space-between;">
+      <button class="btn btn-danger" id="f-delete">Delete</button>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-ghost" id="f-cancel">Cancel</button>
+        <button class="btn btn-primary" id="f-save">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete-account modal -->
+<div class="modal-overlay hidden" id="delete-account-modal">
+  <div class="modal-box" style="max-width:460px;">
+    <div class="modal-header">
+      <h2 class="modal-title">Delete your account?</h2>
+      <button class="modal-close" id="delete-account-close">×</button>
+    </div>
+    <p style="font-size:14px;line-height:1.7;color:rgba(240,240,240,0.65);margin-bottom:6px;">
+      This permanently deletes your profile rules, every Accord you've created, and your sign-in. <strong style="color:rgba(240,240,240,0.9);">This cannot be undone.</strong>
+    </p>
+    <p style="font-size:12px;line-height:1.6;color:rgba(240,240,240,0.4);margin-top:12px;">
+      Google may re-prompt you to sign in to confirm — that's a security check, not a second account.
+    </p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="delete-account-cancel">Keep my account</button>
+      <button class="btn btn-danger" id="delete-account-confirm">Delete forever</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<p class="app-credit">made with ❤️ by <a href="https://modka.netlify.app" target="_blank" rel="noopener">modkavartini</a></p>
+
+<script type="module" src="js/profile.js"></script>
+</body>
+</html>

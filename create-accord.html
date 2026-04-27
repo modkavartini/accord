@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Save an Accord — Accord</title>
+  <meta name="description" content="Save a Google Form to your Accord dashboard." />
+  <meta name="theme-color" content="#080808" />
+
+  <link rel="icon" type="image/svg+xml" href="public/favicon.svg" />
+  <link rel="apple-touch-icon" href="public/favicon.svg" />
+
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .ca-main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 48px 24px 96px;
+    }
+    .ca-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--text-muted);
+      text-decoration: none;
+      margin-bottom: 28px;
+      transition: color 0.15s;
+    }
+    .ca-back:hover { color: rgba(240,240,240,0.85); }
+    .ca-eyebrow {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      color: rgba(240,240,240,0.4);
+      margin-bottom: 12px;
+    }
+    .ca-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 38px;
+      font-weight: 300;
+      letter-spacing: -0.025em;
+      line-height: 1.1;
+      margin-bottom: 10px;
+    }
+    .ca-sub {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+    .ca-card { padding: 28px; border-radius: 16px; }
+    .ca-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      margin-top: 28px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Preloader -->
+<div class="preloader" id="preloader">
+  <div class="preloader-mark">a.</div>
+</div>
+
+<!-- Orb -->
+<div class="orb" style="width:500px;height:500px;background:radial-gradient(circle,rgba(255,255,255,0.015) 0%,transparent 60%);top:-180px;right:-100px;filter:blur(80px);"></div>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <a href="/" class="logo">
+    <div class="logo-mark">a.</div>
+    <span class="logo-text">Accord</span>
+  </a>
+</nav>
+
+<!-- Main -->
+<main class="ca-main">
+  <a class="ca-back" href="/dashboard">← Back to dashboard</a>
+  <p class="ca-eyebrow">SAVE AN ACCORD</p>
+  <h1 class="ca-title">Save a form to your dashboard</h1>
+  <p class="ca-sub">Paste any Google Form link. Accord pulls the title, every question, and the entry IDs automatically.</p>
+
+  <div class="glass ca-card">
+    <div class="field" style="margin-bottom:14px;">
+      <label class="label">Google Form URL</label>
+      <input class="input" id="c-form-url" placeholder="https://docs.google.com/forms/d/…/viewform" autocomplete="off" autofocus />
+      <p class="field-status hidden" id="c-form-status"></p>
+      <div class="detected-list hidden" id="c-detected"></div>
+    </div>
+
+    <div class="field hidden" id="c-after-fields" style="margin-bottom:14px;">
+      <label class="label">Name <span class="label-hint">(autofilled from the form's title)</span></label>
+      <input class="input" id="c-name" autocomplete="off" />
+    </div>
+
+    <div class="field hidden" id="c-link-field" style="margin-bottom:14px;">
+      <label class="label">Your Accord link</label>
+      <div class="readonly-link" id="c-default-link"></div>
+      <p class="field-hint">This is the canonical link — anyone can hit it to auto-fill the form.</p>
+    </div>
+
+    <div class="field hidden" id="c-slug-field" style="margin-bottom:0;">
+      <label class="label">Custom alias <span class="label-hint">(optional)</span></label>
+      <div class="slug-group">
+        <span class="slug-prefix">accord-ingly.netlify.app/go/</span>
+        <input class="slug-input" id="c-slug" placeholder="my-event-2026" autocomplete="off" />
+      </div>
+      <p class="field-error hidden" id="c-slug-error"></p>
+      <p class="field-hint">A friendlier URL that redirects to the same form.</p>
+    </div>
+
+    <div class="ca-actions">
+      <a class="btn btn-ghost" href="/dashboard">Cancel</a>
+      <button class="btn btn-primary" id="create-submit" disabled>Save Accord ✦</button>
+    </div>
+  </div>
+</main>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<p class="app-credit">made with ❤️ by <a href="https://modka.netlify.app" target="_blank" rel="noopener">modkavartini</a></p>
+
+<script type="module" src="js/create-accord.js"></script>
+</body>
+</html>
