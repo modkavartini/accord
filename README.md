@@ -68,10 +68,12 @@ service cloud.firestore {
 
 ## Android app
 
-From `android/`:
+[**Download the latest APK**](https://github.com/modkavartini/accord/releases/latest) — once installed, tapping any `forms.gle` link on your phone opens it through Accord automatically, so you don't have to paste links into `/fill` or rewrite URLs by hand. Just flip the "Open by default" toggle on the app's setup card after install.
+
+To build from source instead, from `android/`:
 
 ```
 gradlew.bat assembleDebug
 ```
 
-APK lands in `android/app/build/outputs/apk/debug/`. Install it, then enable "Open by default" for `forms.gle` in the app's setup card so tapping a `forms.gle` link opens it through Accord.
+APK lands in `android/app/build/outputs/apk/debug/`.
