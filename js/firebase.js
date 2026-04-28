@@ -144,8 +144,8 @@ export async function ensureProfileSeeded(user) {
   const profile = await getProfile(user.uid);
   if (!profile.fields) profile.fields = [];
 
-  // Normalize legacy fields written before source/enabled existed
-  profile.fields = profile.fields.map(f => ({ source: 'value', enabled: true, ...f }));
+  // Normalize legacy fields written before source/enabled/firstOnly existed
+  profile.fields = profile.fields.map(f => ({ source: 'value', enabled: true, firstOnly: true, ...f }));
 
   const hasLabel = label =>
     profile.fields.some(f => (f.label || '').toLowerCase() === label.toLowerCase());
@@ -154,14 +154,14 @@ export async function ensureProfileSeeded(user) {
   if (!hasLabel('Name')) {
     profile.fields.push({
       id: nanoid(8), label: 'Name', match: 'contains', patterns: ['Name'],
-      source: 'value', value: user.displayName || '', enabled: true,
+      source: 'value', value: user.displayName || '', enabled: true, firstOnly: true,
     });
     seeded = true;
   }
   if (!hasLabel('Email')) {
     profile.fields.push({
       id: nanoid(8), label: 'Email', match: 'contains', patterns: ['Email'],
-      source: 'value', value: user.email || '', enabled: true,
+      source: 'value', value: user.email || '', enabled: true, firstOnly: true,
     });
     seeded = true;
   }

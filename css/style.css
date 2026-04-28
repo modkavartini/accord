@@ -1155,12 +1155,23 @@ nav, main, footer, .modal-overlay { position: relative; z-index: 1; }
 .gate-preview-card.collapsed .gate-preview-list { display: none; }
 .preview-row {
   display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-left: 12px;
+  border-left: 2px solid rgba(255,255,255,0.4);
+  transition: opacity 0.15s ease, border-left-color 0.15s ease;
+}
+.preview-row.is-skipped {
+  opacity: 0.4;
+  border-left-color: rgba(255,255,255,0.08);
+}
+.preview-row-text {
+  display: flex;
   flex-direction: column;
   gap: 5px;
-  padding-left: 12px;
-  border-left: 2px solid rgba(255,255,255,0.08);
+  min-width: 0;
+  flex: 1;
 }
-.preview-row.is-filled { border-left-color: rgba(255,255,255,0.4); }
 .preview-label {
   font-size: 11px;
   color: var(--text-dim);
@@ -1175,10 +1186,87 @@ nav, main, footer, .modal-overlay { position: relative; z-index: 1; }
   word-break: break-word;
   line-height: 1.4;
 }
-.preview-row:not(.is-filled) .preview-value {
+.preview-row.is-skipped .preview-value {
+  text-decoration: line-through;
+  text-decoration-color: rgba(255,255,255,0.3);
+}
+
+/* iOS-style switch for opting out of individual fields. */
+.preview-toggle {
+  position: relative;
+  width: 34px;
+  height: 20px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.preview-toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  cursor: pointer;
+  z-index: 1;
+}
+.preview-toggle-knob {
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 999px;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.preview-toggle-knob::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  background: var(--text-dim);
+  border-radius: 50%;
+  transition: transform 0.18s ease, background 0.15s ease;
+}
+.preview-toggle input:checked + .preview-toggle-knob {
+  background: rgba(255,255,255,0.85);
+  border-color: rgba(255,255,255,0.85);
+}
+.preview-toggle input:checked + .preview-toggle-knob::after {
+  transform: translateX(14px);
+  background: #080808;
+}
+.preview-toggle input:focus-visible + .preview-toggle-knob {
+  outline: 2px solid rgba(255,255,255,0.4);
+  outline-offset: 2px;
+}
+
+/* Labeled switch row used inside the field-edit modal. */
+.switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  cursor: pointer;
+}
+.switch-row-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.switch-row-title {
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 500;
+}
+.switch-row-hint {
+  font-size: 12px;
   color: var(--text-muted);
-  font-style: italic;
-  font-family: var(--body);
+  line-height: 1.45;
 }
 
 .hidden { display: none !important; }

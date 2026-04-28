@@ -243,6 +243,8 @@ function openFieldEdit(field) {
   $('f-patterns').value = (field.patterns || []).join(', ');
   $('f-value').value    = field.value || '';
   $('f-source').value   = field.source || 'value';
+  // Default ON for new fields and any legacy field that predates this flag.
+  $('f-first-only').checked = field.firstOnly !== false;
   $('f-delete').style.display = field.id ? '' : 'none';
   applySourceUI();
   $('field-edit-modal').classList.remove('hidden');
@@ -274,7 +276,9 @@ async function saveField() {
   const existing = editingFieldId ? profile.fields.find(x => x.id === editingFieldId) : null;
   const enabled  = existing ? existing.enabled !== false : true;
 
-  const f = { id: editingFieldId || nanoid(8), label, match, patterns, value, source, enabled };
+  const firstOnly = $('f-first-only').checked;
+
+  const f = { id: editingFieldId || nanoid(8), label, match, patterns, value, source, enabled, firstOnly };
   if (editingFieldId) {
     profile.fields = profile.fields.map(x => x.id === editingFieldId ? f : x);
   } else {

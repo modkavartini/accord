@@ -15,6 +15,10 @@ let resolvePromise = null;   // settles with { fields, formUrl } once parse-form
 let authUser       = null;
 let visitorProfile = { fields: [] };
 let initDone       = false;
+// Per-session opt-outs: entryIds the user toggled off in the preview. These
+// fields will be skipped when building the prefill URL even though we have a
+// value for them.
+const skippedEntryIds = new Set();
 
 // ─── Show/hide states ─────────────────────────────────────────────────────
 const states = ['loading','not-found','redirecting','gate'];
@@ -74,9 +78,13 @@ function matchRule(rule, value) {
   });
 }
 
-function findMatchingRule(profile, label) {
+function findMatchingRule(profile, label, usedRuleIds) {
   for (const rule of (profile.fields || [])) {
-    if (matchRule(rule, label)) return rule;
+    if (!matchRule(rule, label)) continue;
+    // `firstOnly` (default ON) means a rule fires for at most one form question
+    // per visit — handy when a form repeats a question like "Confirm Email".
+    if (usedRuleIds && rule.firstOnly !== false && usedRuleIds.has(rule.id)) continue;
+    return rule;
   }
   return null;
 }
@@ -94,10 +102,14 @@ function buildPrefillUrl(formUrl, fields, user) {
   if (!formUrl) return formUrl;
   const params = new URLSearchParams();
 
+  const usedRuleIds = new Set();
   for (const f of ensureEmailAddressField(fields)) {
-    const rule  = findMatchingRule(visitorProfile, f.dummyValue ?? f.label);
+    if (skippedEntryIds.has(f.entryId)) continue;
+    const rule  = findMatchingRule(visitorProfile, f.dummyValue ?? f.label, usedRuleIds);
     const value = resolveRule(rule, user);
-    if (value) params.set(f.entryId, value);
+    if (!value) continue;
+    params.set(f.entryId, value);
+    if (rule?.id) usedRuleIds.add(rule.id);
   }
 
   const qs = params.toString();
@@ -223,11 +235,11 @@ function showSignIn() {
   $('gate-preview')?.classList.add('hidden');
 }
 
-// Build the per-field preview the user sees below the gate card. Each row
-// shows the form's question label and what we'd actually inject for that
-// question, given the visitor's saved profile rules. Synthetic emailAddress
-// is included via ensureEmailAddressField so the preview matches what gets
-// posted.
+// Build the per-field preview the user sees below the gate card. We only show
+// rows for fields Accord can actually fill; un-mappable questions are still
+// counted in the total but hidden to keep the list focused on what will
+// happen. Each visible row carries a toggle so the visitor can opt out of
+// individual fields before proceeding.
 function renderPreview() {
   const wrap = $('gate-preview');
   if (!wrap) return;
@@ -240,14 +252,21 @@ function renderPreview() {
   const list   = $('gate-preview-list');
   list.innerHTML = '';
 
-  let filledCount = 0;
+  let fillableCount = 0;
+  const usedRuleIds = new Set();
   for (const f of fields) {
     const label = (f.dummyValue || '').trim() || 'Untitled question';
-    const rule  = findMatchingRule(visitorProfile, label);
+    const rule  = findMatchingRule(visitorProfile, label, usedRuleIds);
     const value = resolveRule(rule, authUser);
+    if (!value) continue;
+    if (rule?.id) usedRuleIds.add(rule.id);
+    fillableCount++;
 
     const li = document.createElement('li');
-    li.className = 'preview-row' + (value ? ' is-filled' : '');
+    li.className = 'preview-row is-filled';
+
+    const text = document.createElement('div');
+    text.className = 'preview-row-text';
 
     const labelEl = document.createElement('div');
     labelEl.className = 'preview-label';
@@ -255,17 +274,44 @@ function renderPreview() {
 
     const valueEl = document.createElement('div');
     valueEl.className = 'preview-value';
-    valueEl.textContent = value || 'Not auto-filled';
+    valueEl.textContent = value;
 
-    li.appendChild(labelEl);
-    li.appendChild(valueEl);
+    text.appendChild(labelEl);
+    text.appendChild(valueEl);
+
+    const toggle = document.createElement('label');
+    toggle.className = 'preview-toggle';
+    toggle.title = 'Auto-fill this field';
+
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = !skippedEntryIds.has(f.entryId);
+    cb.addEventListener('change', () => {
+      if (cb.checked) skippedEntryIds.delete(f.entryId);
+      else            skippedEntryIds.add(f.entryId);
+      li.classList.toggle('is-skipped', !cb.checked);
+    });
+
+    const knob = document.createElement('span');
+    knob.className = 'preview-toggle-knob';
+    toggle.appendChild(cb);
+    toggle.appendChild(knob);
+
+    if (skippedEntryIds.has(f.entryId)) li.classList.add('is-skipped');
+
+    li.appendChild(text);
+    li.appendChild(toggle);
     list.appendChild(li);
-    if (value) filledCount++;
   }
 
   const total = fields.length;
   $('gate-preview-summary').textContent =
-    `${filledCount} of ${total} field${total === 1 ? '' : 's'} will auto-fill`;
+    `${fillableCount} of ${total} field${total === 1 ? '' : 's'} will auto-fill`;
+
+  if (!fillableCount) {
+    wrap.classList.add('hidden');
+    return;
+  }
   wrap.classList.remove('hidden');
 }
 
