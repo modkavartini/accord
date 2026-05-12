@@ -105,11 +105,16 @@ function buildPrefillUrl(formUrl, fields, user) {
   const usedRuleIds = new Set();
   for (const f of ensureEmailAddressField(fields)) {
     if (skippedEntryIds.has(f.entryId)) continue;
-    const rule  = findMatchingRule(visitorProfile, f.dummyValue ?? f.label, usedRuleIds);
+    // The synthetic emailAddress field is a no-op on forms without
+    // "Collect email addresses" enabled — Google silently drops the param.
+    // It must NOT consume the Email rule's firstOnly budget, or the form's
+    // real entry-based Email question gets skipped and lands empty.
+    const synthetic = f.entryId === 'emailAddress';
+    const rule  = findMatchingRule(visitorProfile, f.dummyValue ?? f.label, synthetic ? null : usedRuleIds);
     const value = resolveRule(rule, user);
     if (!value) continue;
     params.set(f.entryId, value);
-    if (rule?.id) usedRuleIds.add(rule.id);
+    if (rule?.id && !synthetic) usedRuleIds.add(rule.id);
   }
 
   const qs = params.toString();
@@ -248,18 +253,31 @@ function renderPreview() {
     return;
   }
 
-  const fields = ensureEmailAddressField(resolved.fields);
+  // Real form questions first, synthetic emailAddress last. The synthetic is
+  // a URL-only bonus (Google's "Collect email addresses" key) and shouldn't
+  // be displayed when a real entry-based Email question already covers it,
+  // otherwise the preview shows "Email" twice.
+  const allFields  = ensureEmailAddressField(resolved.fields);
+  const realFields = allFields.filter(f => f.entryId !== 'emailAddress');
+  const synthField = allFields.find(f => f.entryId === 'emailAddress') || null;
+  const orderedFields = synthField ? [...realFields, synthField] : realFields;
   const list   = $('gate-preview-list');
   list.innerHTML = '';
 
   let fillableCount = 0;
+  let syntheticShown = false;
   const usedRuleIds = new Set();
-  for (const f of fields) {
+  for (const f of orderedFields) {
     const label = (f.dummyValue || '').trim() || 'Untitled question';
-    const rule  = findMatchingRule(visitorProfile, label, usedRuleIds);
+    const synthetic = f.entryId === 'emailAddress';
+    const rule  = findMatchingRule(visitorProfile, label, synthetic ? null : usedRuleIds);
     const value = resolveRule(rule, authUser);
     if (!value) continue;
-    if (rule?.id) usedRuleIds.add(rule.id);
+    // Don't double-display: if a real field already claimed this rule, the
+    // synthetic emailAddress would just be a duplicate "Email" row.
+    if (synthetic && rule && usedRuleIds.has(rule.id)) continue;
+    if (rule?.id && !synthetic) usedRuleIds.add(rule.id);
+    if (synthetic) syntheticShown = true;
     fillableCount++;
 
     const li = document.createElement('li');
@@ -304,7 +322,7 @@ function renderPreview() {
     list.appendChild(li);
   }
 
-  const total = fields.length;
+  const total = realFields.length + (syntheticShown ? 1 : 0);
   $('gate-preview-summary').textContent =
     `${fillableCount} of ${total} field${total === 1 ? '' : 's'} will auto-fill`;
 
@@ -417,6 +435,7 @@ $('gate-login-btn')?.addEventListener('click', async () => {
 });
 
 $('gate-skip-btn')?.addEventListener('click', () => doSkipRedirect());
+$('gate-confirm-skip-btn')?.addEventListener('click', () => doSkipRedirect());
 
 $('gate-proceed-btn')?.addEventListener('click', () => {
   if (authUser && resolved) doRedirect(authUser);
