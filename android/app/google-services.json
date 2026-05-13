@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "518918384327",
+    "project_id": "accord-ed7f5",
+    "storage_bucket": "accord-ed7f5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:518918384327:android:9f06237eff47b33419ace2",
+        "android_client_info": {
+          "package_name": "com.accord.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "518918384327-mup0pn0hgpgbs5isp7db4dlj6h9ppq2i.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.accord.app",
+            "certificate_hash": "a6d3686e9fb53feae6d2717594c9244fad83f05f"
+          }
+        },
+        {
+          "client_id": "518918384327-0mgnvmc3e6monqk96vfq530msn71oip5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCtI2JzXDBnQPyNQgdA_K6MC0I8EHwBDRY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "518918384327-0mgnvmc3e6monqk96vfq530msn71oip5.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

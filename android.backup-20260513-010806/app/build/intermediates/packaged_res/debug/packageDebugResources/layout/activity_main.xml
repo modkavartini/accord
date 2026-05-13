@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#080808"
+    android:fillViewport="true"
+    android:scrollbars="none">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:paddingHorizontal="32dp"
+        android:paddingVertical="48dp">
+
+        <!-- Hero monogram (real Cormorant Garamond italic, rendered) -->
+        <ImageView
+            android:layout_width="120dp"
+            android:layout_height="120dp"
+            android:src="@drawable/accord_wordmark"
+            android:contentDescription="Accord"
+            android:layout_marginBottom="2dp" />
+
+        <!-- App name in spaced caps to echo the website's typographic rhythm -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ACCORD"
+            android:textSize="11sp"
+            android:textColor="#80F0F0F0"
+            android:letterSpacing="0.5"
+            android:layout_marginBottom="44dp" />
+
+        <!-- Setup prompt: visible only when forms.gle is not yet a user-selected default -->
+        <LinearLayout
+            android:id="@+id/setupCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/setup_card_bg"
+            android:padding="22dp"
+            android:layout_marginBottom="28dp"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="◆  Setup required"
+                android:textColor="#F0F0F0"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.04"
+                android:layout_marginBottom="10dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Allow Accord to open forms.gle links by default. Tap below — you'll just need to flip the toggle on the next screen."
+                android:textColor="#80F0F0F0"
+                android:textSize="13sp"
+                android:lineSpacingMultiplier="1.55"
+                android:layout_marginBottom="18dp" />
+
+            <Button
+                android:id="@+id/enableButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Open settings"
+                android:textColor="#080808"
+                android:textAllCaps="false"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:background="@drawable/btn_primary"
+                android:paddingHorizontal="22dp"
+                android:paddingVertical="11dp"
+                android:stateListAnimator="@null"
+                android:elevation="0dp" />
+        </LinearLayout>
+
+        <!-- Short pitch -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="A redirect helper for Google Forms. Tap any forms.gle link and Accord rewrites it to open through accord-ingly.netlify.app — no setup, no clutter."
+            android:textSize="14sp"
+            android:textColor="#A6F0F0F0"
+            android:textAlignment="center"
+            android:lineSpacingMultiplier="1.7"
+            android:layout_marginBottom="24dp" />
+
+        <!-- More info toggle -->
+        <Button
+            android:id="@+id/moreInfoToggle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="More info  ▾"
+            android:textColor="#A6F0F0F0"
+            android:textAllCaps="false"
+            android:textSize="12sp"
+            android:letterSpacing="0.04"
+            android:background="@drawable/btn_ghost"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="9dp"
+            android:layout_marginBottom="28dp"
+            android:stateListAnimator="@null"
+            android:elevation="0dp" />
+
+        <!-- Expanded info -->
+        <LinearLayout
+            android:id="@+id/moreInfoContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:layout_marginBottom="32dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="◆  How it works"
+                android:textColor="#F0F0F0"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.04"
+                android:layout_marginBottom="10dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="When you tap a forms.gle short link from any app, Accord intercepts it, extracts the form ID, and opens accord-ingly.netlify.app/go/{id} in your browser. You can also share any forms link to Accord using the Share button — that's the recommended path for Google Forms links you receive in Gmail or messaging apps."
+                android:textColor="#80F0F0F0"
+                android:textSize="13sp"
+                android:lineSpacingMultiplier="1.6"
+                android:layout_marginBottom="22dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="◆  Why setup is needed"
+                android:textColor="#F0F0F0"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.04"
+                android:layout_marginBottom="10dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Android 12 routes all HTTPS links to the default browser unless you explicitly assign a domain to another app. Accord's setup button takes you straight to that screen so you can flip the toggle in one tap."
+                android:textColor="#80F0F0F0"
+                android:textSize="13sp"
+                android:lineSpacingMultiplier="1.6"
+                android:layout_marginBottom="22dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="◆  docs.google.com isn't supported (yet)"
+                android:textColor="#F0F0F0"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.04"
+                android:layout_marginBottom="10dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Direct docs.google.com/forms/d/e/… links can't be intercepted automatically. Google's Docs, Drive, Sheets and Slides apps share a system-level claim on docs.google.com that no third-party app can override on Android 12+. Use the Share button as the workaround for those — Accord will still convert them when you share to it."
+                android:textColor="#80F0F0F0"
+                android:textSize="13sp"
+                android:lineSpacingMultiplier="1.6" />
+        </LinearLayout>
+
+        <!-- Primary CTA: open the website in the user's browser -->
+        <Button
+            android:id="@+id/openButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Open Accord  ↗"
+            android:textColor="#080808"
+            android:textAllCaps="false"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:background="@drawable/btn_primary"
+            android:paddingHorizontal="32dp"
+            android:paddingVertical="14dp"
+            android:stateListAnimator="@null"
+            android:elevation="0dp" />
+
+    </LinearLayout>
+</ScrollView>

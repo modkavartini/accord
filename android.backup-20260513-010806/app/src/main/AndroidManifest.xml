@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Accord">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+
+            <!-- Home screen launcher -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!--
+                Google Forms full URL: https://docs.google.com/forms/d/e/{ID}/viewform
+                Android 12+ will NOT offer a chooser for this — Google's apps hold a
+                verified claim on docs.google.com. The filter is kept so it works on
+                older Android versions and in case the user clears Google's domain
+                defaults. For Android 12+, use the Share workaround instead.
+            -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="docs.google.com"
+                    android:pathPrefix="/forms/d/e/" />
+            </intent-filter>
+
+            <!--
+                Google Forms short URL: https://forms.gle/{SID}
+                forms.gle is not claimed by any Google app, so Android will offer a
+                chooser. Enable Accord as default:
+                Settings > Apps > Accord > Open by default > Add link > forms.gle
+            -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="forms.gle" />
+            </intent-filter>
+
+            <!--
+                Share target: user taps Share on any forms link (e.g. from Chrome's
+                address bar, Gmail, WhatsApp) and picks Accord. Works for both
+                docs.google.com and forms.gle links, bypassing the Android 12+
+                domain verification restriction.
+            -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+
+        </activity>
+    </application>
+
+</manifest>

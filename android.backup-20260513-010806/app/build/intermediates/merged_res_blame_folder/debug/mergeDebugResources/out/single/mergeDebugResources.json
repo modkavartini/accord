@@ -1,0 +1,94 @@
+[
+    {
+        "merged": "C:\\Users\\abhi\\.gradle\\daemon\\8.9\\com.accord.app-debug-23:\\drawable_ic_launcher_foreground.xml.flat",
+        "source": "C:\\Users\\abhi\\.gradle\\daemon\\8.9\\com.accord.app-main-25:\\drawable\\ic_launcher_foreground.xml"
+    },
+    {
+        "merged": "com.accord.app-debug-23:/mipmap-mdpi_ic_launcher.png.flat",
+        "source": "com.accord.app-main-25:/mipmap-mdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.accord.app-debug-23:/drawable-xxxhdpi_ic_launcher_foreground.png.flat",
+        "source": "com.accord.app-main-25:/drawable-xxxhdpi/ic_launcher_foreground.png"
+    },
+    {
+        "merged": "com.accord.app-debug-23:/mipmap-xxhdpi_ic_launcher.png.flat",
+        "source": "com.accord.app-main-25:/mipmap-xxhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.accord.app-debug-23:/drawable_btn_ghost.xml.flat",
+        "source": "com.accord.app-main-25:/drawable/btn_ghost.xml"
+    },
+    {
+        "merged": "com.accord.app-debug-23:/drawable_btn_primary.xml.flat",
+        "source": "com.accord.app-main-25:/drawable/btn_primary.xml"
+    },
+    {
+        "merged": "com.accord.app-debug-23:/mipmap-xhdpi_ic_launcher.png.flat",
+        "source": "com.accord.app-main-25:/mipmap-xhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.accord.app-debug-23:/drawable_splash_screen.xml.flat",
+        "source": "com.accord.app-main-25:/drawable/splash_screen.xml"
+    },
+    {
+        "merged": "com.accord.app-debug-23:/mipmap-hdpi_ic_launcher_round.png.flat",
+        "source": "com.accord.app-main-25:/mipmap-hdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.accord.app-debug-23:/mipmap-hdpi_ic_launcher.png.flat",
+        "source": "com.accord.app-main-25:/mipmap-hdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.accord.app-debug-23:/drawable-xxxhdpi_accord_logo.png.flat",
+        "source": "com.accord.app-main-25:/drawable-xxxhdpi/accord_logo.png"
+    },
+    {
+        "merged": "com.accord.app-debug-23:/mipmap-xxxhdpi_ic_launcher_round.png.flat",
+        "source": "com.accord.app-main-25:/mipmap-xxxhdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.accord.app-debug-23:/mipmap-xxxhdpi_ic_launcher.png.flat",
+        "source": "com.accord.app-main-25:/mipmap-xxxhdpi/ic_launcher.png"
+    },
+    {
+        "merged": "com.accord.app-debug-23:/mipmap-xxhdpi_ic_launcher_round.png.flat",
+        "source": "com.accord.app-main-25:/mipmap-xxhdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.accord.app-debug-23:/mipmap-xhdpi_ic_launcher_round.png.flat",
+        "source": "com.accord.app-main-25:/mipmap-xhdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "C:\\Users\\abhi\\.gradle\\daemon\\8.9\\com.accord.app-debug-23:\\mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "C:\\Users\\abhi\\.gradle\\daemon\\8.9\\com.accord.app-main-25:\\mipmap-anydpi-v26\\ic_launcher.xml"
+    },
+    {
+        "merged": "com.accord.app-debug-23:/layout_activity_main.xml.flat",
+        "source": "com.accord.app-main-25:/layout/activity_main.xml"
+    },
+    {
+        "merged": "C:\\Users\\abhi\\.gradle\\daemon\\8.9\\com.accord.app-debug-23:\\drawable_ic_launcher_background.xml.flat",
+        "source": "C:\\Users\\abhi\\.gradle\\daemon\\8.9\\com.accord.app-main-25:\\drawable\\ic_launcher_background.xml"
+    },
+    {
+        "merged": "C:\\Users\\abhi\\.gradle\\daemon\\8.9\\com.accord.app-debug-23:\\layout_activity_main.xml.flat",
+        "source": "C:\\Users\\abhi\\.gradle\\daemon\\8.9\\com.accord.app-main-25:\\layout\\activity_main.xml"
+    },
+    {
+        "merged": "C:\\Users\\abhi\\.gradle\\daemon\\8.9\\com.accord.app-debug-23:\\mipmap-anydpi-v26_ic_launcher_round.xml.flat",
+        "source": "C:\\Users\\abhi\\.gradle\\daemon\\8.9\\com.accord.app-main-25:\\mipmap-anydpi-v26\\ic_launcher_round.xml"
+    },
+    {
+        "merged": "com.accord.app-debug-23:/mipmap-mdpi_ic_launcher_round.png.flat",
+        "source": "com.accord.app-main-25:/mipmap-mdpi/ic_launcher_round.png"
+    },
+    {
+        "merged": "com.accord.app-debug-23:/drawable-xxxhdpi_accord_wordmark.png.flat",
+        "source": "com.accord.app-main-25:/drawable-xxxhdpi/accord_wordmark.png"
+    },
+    {
+        "merged": "com.accord.app-debug-23:/drawable_setup_card_bg.xml.flat",
+        "source": "com.accord.app-main-25:/drawable/setup_card_bg.xml"
+    }
+]

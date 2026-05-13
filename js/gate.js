@@ -353,6 +353,15 @@ async function doRedirect(user) {
     incrementFormVisits(resolved.formId),
   ]);
 
+  // Native app: record this fill in on-device history before we hand off.
+  try {
+    window.AccordBridge?.recordFill?.(
+      resolved.name || '',
+      resolved.formId || '',
+      url,
+    );
+  } catch {}
+
   setTimeout(() => { window.location.href = url; }, 1100);
 }
 

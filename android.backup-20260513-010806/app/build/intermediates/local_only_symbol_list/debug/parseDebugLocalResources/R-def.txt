@@ -1,0 +1,20 @@
+R_DEF: Internal format may change without notice
+local
+drawable accord_logo
+drawable accord_wordmark
+drawable btn_ghost
+drawable btn_primary
+drawable ic_launcher_background
+drawable ic_launcher_foreground
+drawable setup_card_bg
+drawable splash_screen
+id enableButton
+id moreInfoContent
+id moreInfoToggle
+id openButton
+id setupCard
+layout activity_main
+mipmap ic_launcher
+mipmap ic_launcher_round
+string app_name
+style Theme.Accord

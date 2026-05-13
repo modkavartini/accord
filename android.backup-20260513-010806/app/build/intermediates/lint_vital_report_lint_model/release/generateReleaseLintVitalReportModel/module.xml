@@ -1,0 +1,19 @@
+<lint-module
+    format="1"
+    dir="C:\Users\abhi\Downloads\accord\android\app"
+    name=":app"
+    type="APP"
+    maven="Accord:app:"
+    agpVersion="8.3.2"
+    buildFolder="build"
+    bootClassPath="C:\Users\abhi\AppData\Local\Android\Sdk\platforms\android-35\android.jar;C:\Users\abhi\AppData\Local\Android\Sdk\build-tools\34.0.0\core-lambda-stubs.jar"
+    javaSourceLevel="17"
+    compileTarget="android-35"
+    neverShrinking="true">
+  <lintOptions
+      abortOnError="true"
+      absolutePaths="true"
+      checkReleaseBuilds="true"
+      explainIssues="true"/>
+  <variant name="release"/>
+</lint-module>
