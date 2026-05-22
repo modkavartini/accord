@@ -11,6 +11,8 @@ const $ = id => document.getElementById(id);
 // ─── State ────────────────────────────────────────────────────────────────
 let resolved       = null;   // { source, formId, formUrl, name, fields }
 let resolveError   = null;
+let resolveErrorMsg = null;  // human-readable error from parse-form (if any)
+let fallbackUrl    = null;   // best-known form URL to offer when fields can't be read
 let resolvePromise = null;   // settles with { fields, formUrl } once parse-form returns
 let authUser       = null;
 let visitorProfile = { fields: [] };
@@ -24,6 +26,21 @@ const skippedEntryIds = new Set();
 const states = ['loading','not-found','redirecting','gate'];
 function show(state) {
   states.forEach(s => $(`state-${s}`).classList.toggle('hidden', s !== state));
+}
+
+// Surface an error state with a "Proceed to form" escape hatch whenever we
+// know a candidate URL — lets the visitor verify the link themselves when
+// Accord can't read it (e.g. a sign-in-walled form).
+function renderNotFound(message) {
+  $('not-found-text').textContent = message;
+  const openBtn = $('not-found-open-btn');
+  if (fallbackUrl) {
+    openBtn.href = fallbackUrl;
+    openBtn.classList.remove('hidden');
+  } else {
+    openBtn.classList.add('hidden');
+  }
+  show('not-found');
 }
 
 // ─── Preloader ────────────────────────────────────────────────────────────
@@ -146,14 +163,17 @@ async function resolveForm() {
         name: accord.name,
         fields: Array.isArray(accord.fields) ? accord.fields : null,
       };
+      fallbackUrl = resolved.formUrl || null;
       if (!resolved.fields) await fetchFieldsInto(resolved);
       return;
     }
     // Slug miss — if it looks like a forms.gle short code (alphanumeric, no
     // hyphens, shorter than a full form ID), resolve via forms.gle redirect.
     if (/^[A-Za-z0-9]{8,19}$/.test(route.value)) {
+      const shortUrl = `https://forms.gle/${route.value}`;
+      fallbackUrl = shortUrl;
       resolved = { source: 'short', formId: null, formUrl: null, name: null, fields: null };
-      await fetchFieldsInto(resolved, `https://forms.gle/${route.value}`);
+      await fetchFieldsInto(resolved, shortUrl);
       return;
     }
     resolveError = 'not-found';
@@ -164,10 +184,12 @@ async function resolveForm() {
   let savedName = null;
   let inputForFn = route.value;
   if (route.kind === 'formId') {
+    fallbackUrl = `https://docs.google.com/forms/d/e/${route.value}/viewform`;
     try {
       const existing = await getAccordByFormId(route.value);
       if (existing) {
         savedName = existing.name;
+        if (existing.formUrl) fallbackUrl = existing.formUrl;
         if (Array.isArray(existing.fields) && existing.fields.length) {
           resolved = {
             source: 'formId',
@@ -180,6 +202,8 @@ async function resolveForm() {
         }
       }
     } catch {}
+  } else if (route.kind === 'url') {
+    fallbackUrl = route.value;
   }
 
   resolved = { source: route.kind, formId: null, formUrl: null, name: savedName, fields: null };
@@ -196,10 +220,16 @@ async function fetchFieldsInto(target, inputUrl) {
     payload = await res.json().catch(() => ({}));
   } catch {
     resolveError = 'unreadable';
+    resolveErrorMsg = 'Network error — please try again';
     return;
   }
+  // parse-form returns the canonical Forms URL even on error paths (401,
+  // 422, etc.) so we can hand the visitor a working link to the form even
+  // when we can't read its questions.
+  if (payload?.formUrl) fallbackUrl = payload.formUrl;
   if (!res.ok || !Array.isArray(payload.fields)) {
     resolveError = 'unreadable';
+    resolveErrorMsg = payload?.error || null;
     return;
   }
 
@@ -387,15 +417,15 @@ async function init() {
   await resolvePromise;
 
   if (resolveError === 'not-found' || !resolved) {
-    show('not-found');
+    renderNotFound("Accord not found");
     hidePreloader();
     return;
   }
   if (resolveError === 'unreadable') {
     $('gate-accord-name').textContent = resolved.name || 'this form';
-    show('not-found');
-    $('state-not-found').querySelector('.not-found').textContent =
-      "Couldn't read this form — make sure the link is public.";
+    const msg = resolveErrorMsg
+      || "Couldn't read this form — make sure the link is public.";
+    renderNotFound(msg);
     hidePreloader();
     return;
   }

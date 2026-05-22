@@ -1069,7 +1069,8 @@ nav, main, footer, .modal-overlay { position: relative; z-index: 1; }
   animation: spin 0.85s linear infinite;
 }
 .redirect-text { font-family: var(--display); font-size: 22px; font-weight: 300; color: rgba(240,240,240,0.55); }
-.not-found { font-family: var(--display); font-size: 28px; font-weight: 300; color: rgba(240,240,240,0.4); text-align: center; }
+.not-found { font-family: var(--display); font-size: 28px; font-weight: 300; color: rgba(240,240,240,0.4); text-align: center; max-width: 480px; padding: 0 20px; }
+.not-found-actions { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 20px; }
 
 /* ── Animations ── */
 @keyframes fadeUp {

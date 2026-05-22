@@ -59,7 +59,6 @@ exports.handler = async (event) => {
         'Cookie': 'CONSENT=YES+; SOCS=CAI',
       },
     });
-    if (!res.ok) return json(502, { error: `Form fetch failed (${res.status})` });
     html = await res.text();
   } catch {
     return json(502, { error: 'Could not reach the form' });
@@ -67,13 +66,34 @@ exports.handler = async (event) => {
 
   // After redirects (forms.gle / bit.ly / etc.), check where we ended up.
   const finalUrl = new URL(res.url || formUrl);
+  const finalFormUrl = (FORMS_HOSTS.has(finalUrl.hostname) && /\/forms\//.test(finalUrl.pathname))
+    ? `${finalUrl.origin}${finalUrl.pathname}`
+    : null;
+
+  // Google returns 401 with a "request storage access" interstitial for forms
+  // that require sign-in. Surface that as a real reason — not a generic 401 —
+  // and pass the form URL back so the UI can offer "open the form yourself".
+  if (res.status === 401) {
+    return json(403, {
+      error: 'This form requires Google sign-in — Accord can only prefill public forms',
+      formUrl: finalFormUrl,
+      requiresSignIn: true,
+    });
+  }
   // Sign-in-walled forms redirect to accounts.google.com — surface a real reason.
   if (finalUrl.hostname === 'accounts.google.com' || /\/ServiceLogin/.test(finalUrl.pathname)) {
-    return json(403, { error: 'This form requires sign-in — Accord can only prefill public forms' });
+    return json(403, {
+      error: 'This form requires Google sign-in — Accord can only prefill public forms',
+      formUrl: finalFormUrl,
+      requiresSignIn: true,
+    });
   }
   // Consent interstitial (defensive — should be bypassed by the cookie above).
   if (finalUrl.hostname.includes('consent.google.com')) {
     return json(502, { error: 'Google blocked the request with a consent prompt — please retry' });
+  }
+  if (!res.ok) {
+    return json(502, { error: `Form fetch failed (${res.status})`, formUrl: finalFormUrl });
   }
   if (!FORMS_HOSTS.has(finalUrl.hostname) || !/\/forms\//.test(finalUrl.pathname)) {
     return json(400, { error: "That link doesn't point to a Google Form" });
@@ -85,10 +105,14 @@ exports.handler = async (event) => {
     // Page loaded but no form data — distinguish "needs permission" from
     // genuinely-broken parsing so the user knows whether to retry or fix sharing.
     const lower = html.toLowerCase();
-    if (lower.includes('you need permission') || lower.includes('request access') || lower.includes('sign in to continue')) {
-      return json(403, { error: 'This form requires sign-in or explicit access' });
+    if (lower.includes('you need permission') || lower.includes('request access') || lower.includes('sign in to continue') || /<title[^>]*>[^<]*sign[- ]in[^<]*<\/title>/i.test(html)) {
+      return json(403, {
+        error: 'This form requires Google sign-in — Accord can only prefill public forms',
+        formUrl: finalFormUrl,
+        requiresSignIn: true,
+      });
     }
-    return json(422, { error: "Couldn't read the form — make sure the link is correct and the form accepts responses" });
+    return json(422, { error: "Couldn't read the form — make sure the link is correct and the form accepts responses", formUrl: finalFormUrl });
   }
 
   let data;

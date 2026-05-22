@@ -41,8 +41,11 @@
 
 <!-- Not found state -->
 <div class="redirect-state hidden" id="state-not-found">
-  <p class="not-found">Accord not found</p>
-  <a href="/" class="btn btn-ghost" style="margin-top:16px;">← Go home</a>
+  <p class="not-found" id="not-found-text">Accord not found</p>
+  <div class="not-found-actions">
+    <a href="#" class="btn btn-primary hidden" id="not-found-open-btn" target="_blank" rel="noopener noreferrer">Proceed to form link →</a>
+    <a href="/" class="btn btn-ghost">← Go home</a>
+  </div>
 </div>
 
 <!-- Redirecting state -->
