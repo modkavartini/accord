@@ -4,6 +4,7 @@ import {
   ensureProfileSeeded,
   isFormIdShape, extractFormId,
   incrementUserFills, incrementFormVisits,
+  createAccord, nanoid,
 } from './firebase.js';
 
 const $ = id => document.getElementById(id);
@@ -13,6 +14,8 @@ let resolved       = null;   // { source, formId, formUrl, name, fields }
 let resolveError   = null;
 let resolveErrorMsg = null;  // human-readable error from parse-form (if any)
 let fallbackUrl    = null;   // best-known form URL to offer when fields can't be read
+let requiresSignIn = false;  // true if parse-form told us the form is sign-in-walled
+let contributeRouteFormId = null; // formId derived from the route, used to validate pasted HTML
 let resolvePromise = null;   // settles with { fields, formUrl } once parse-form returns
 let authUser       = null;
 let visitorProfile = { fields: [] };
@@ -40,7 +43,185 @@ function renderNotFound(message) {
   } else {
     openBtn.classList.add('hidden');
   }
+  renderContributeCard();
   show('not-found');
+}
+
+// ─── Contribute (paste form source) ───────────────────────────────────────
+// Sign-in-walled forms (file-upload questions, restricted audiences, etc.)
+// can't be parsed server-side. The visitor's own browser CAN see them
+// because they're already signed in to Google. This flow lets them paste
+// the raw form HTML so Accord can cache the field list under the form's
+// real formId — every future visitor then gets auto-fill without anyone
+// needing to repeat the dance.
+function renderContributeCard() {
+  const card = $('contribute-card');
+  if (!card) return;
+  // Only offer this for forms that are sign-in-walled AND for routes where
+  // we know the candidate form URL — without a URL there's no way to open
+  // the source viewer, and without a sign-in-wall the user shouldn't have
+  // to touch this flow at all.
+  if (!requiresSignIn || !fallbackUrl) {
+    card.classList.add('hidden');
+    return;
+  }
+  card.classList.remove('hidden');
+  $('contribute-source-btn').href = 'view-source:' + fallbackUrl;
+  // Sign-in note visible only when not yet authed.
+  $('contribute-signin-note').classList.toggle('hidden', !!authUser);
+}
+
+function setContributeStatus(kind, msg) {
+  const el = $('contribute-status');
+  el.classList.remove('hidden', 'is-error', 'is-ok', 'is-loading');
+  if (kind === 'error')   el.classList.add('is-error');
+  if (kind === 'ok')      el.classList.add('is-ok');
+  if (kind === 'loading') el.classList.add('is-loading');
+  el.innerHTML = kind === 'loading'
+    ? `<span class="spinner spinner-sm"></span><span>${msg}</span>`
+    : msg;
+}
+
+// Walk the HTML to capture the FB_PUBLIC_LOAD_DATA_ array literal by counting
+// brackets — mirrors the server-side parser in netlify/functions/parse-form.js.
+function extractFbBlob(html) {
+  const marker = 'FB_PUBLIC_LOAD_DATA_';
+  const idx = html.indexOf(marker);
+  if (idx === -1) return null;
+  const start = html.indexOf('[', idx);
+  if (start === -1) return null;
+
+  let depth = 0, inStr = false, quote = '', esc = false;
+  for (let i = start; i < html.length; i++) {
+    const c = html[i];
+    if (esc) { esc = false; continue; }
+    if (inStr) {
+      if (c === '\\') { esc = true; continue; }
+      if (c === quote) { inStr = false; quote = ''; }
+      continue;
+    }
+    if (c === '"' || c === "'") { inStr = true; quote = c; continue; }
+    if (c === '[') depth++;
+    else if (c === ']') {
+      depth--;
+      if (depth === 0) return html.slice(start, i + 1);
+    }
+  }
+  return null;
+}
+
+function parsePastedForm(html) {
+  const blob = extractFbBlob(html);
+  if (!blob) return { error: "Couldn't find form data in what you pasted — make sure you copied the whole page source." };
+
+  let data;
+  try { data = JSON.parse(blob); } catch { return { error: 'Form data was unreadable — try copying the source again.' }; }
+
+  const rawFields = data?.[1]?.[1];
+  if (!Array.isArray(rawFields)) return { error: 'No questions found in that source.' };
+
+  const fields = [];
+  for (const f of rawFields) {
+    const label = (f?.[1] || '').toString().trim();
+    const subs  = f?.[4];
+    if (!Array.isArray(subs)) continue;
+    for (const s of subs) {
+      const entryNum = s?.[0];
+      if (typeof entryNum !== 'number') continue;
+      fields.push({ entryId: `entry.${entryNum}`, dummyValue: label });
+    }
+  }
+  if (!fields.some(f => f.entryId === 'emailAddress')) {
+    fields.unshift({ entryId: 'emailAddress', dummyValue: 'Email' });
+  }
+  if (!fields.length) return { error: 'No prefillable fields detected in that source.' };
+
+  // Pull the formId from any /forms/d/[/e/]<id> reference embedded in the page.
+  const idMatch = html.match(/forms\/d\/(?:e\/)?([A-Za-z0-9_-]{20,})/);
+  const formId = idMatch ? idMatch[1] : null;
+
+  let formTitle = '';
+  if (typeof data?.[3] === 'string') formTitle = data[3].trim();
+  else if (typeof data?.[1]?.[8] === 'string') formTitle = data[1][8].trim();
+  if (!formTitle) {
+    const tm = html.match(/<title[^>]*>([^<]*)<\/title>/i);
+    if (tm) formTitle = tm[1].replace(/\s*-\s*Google Forms\s*$/, '').trim();
+  }
+
+  return { formId, formTitle, fields };
+}
+
+async function handleContributeSubmit() {
+  const btn = $('contribute-submit');
+  const ta  = $('contribute-textarea');
+  const raw = (ta.value || '').trim();
+  if (!raw) { setContributeStatus('error', 'Paste the form source first.'); return; }
+
+  setContributeStatus('loading', 'Reading the form…');
+  btn.disabled = true;
+
+  const parsed = parsePastedForm(raw);
+  if (parsed.error) {
+    setContributeStatus('error', parsed.error);
+    btn.disabled = false;
+    return;
+  }
+
+  // Validate against the route's formId so a user can't paste Form A's
+  // source while looking at Form B — that would poison everyone else's
+  // auto-fill experience for B.
+  const expectedFormId = contributeRouteFormId || extractFormId(fallbackUrl) || null;
+  if (expectedFormId && parsed.formId && parsed.formId !== expectedFormId) {
+    setContributeStatus('error', "That source is from a different form — please open the source view for this exact link.");
+    btn.disabled = false;
+    return;
+  }
+  const finalFormId = parsed.formId || expectedFormId;
+  if (!finalFormId) {
+    setContributeStatus('error', "Couldn't determine the form ID — try copying the source again.");
+    btn.disabled = false;
+    return;
+  }
+
+  // Require sign-in so the contribution shows up on a real dashboard.
+  if (!authUser) {
+    setContributeStatus('loading', 'Signing you in…');
+    try {
+      const result = await signInWithGoogle();
+      authUser = result.user;
+      try { visitorProfile = await ensureProfileSeeded(result.user); } catch {}
+    } catch {
+      setContributeStatus('error', 'Sign-in cancelled. Try again to contribute.');
+      btn.disabled = false;
+      return;
+    }
+  }
+
+  setContributeStatus('loading', 'Saving to Accord…');
+  const formUrl = fallbackUrl || `https://docs.google.com/forms/d/e/${finalFormId}/viewform`;
+  try {
+    await createAccord({
+      id:          nanoid(),
+      name:        parsed.formTitle || 'Untitled form',
+      slug:        null,
+      formId:      finalFormId,
+      formUrl,
+      fields:      parsed.fields,
+      ownerId:     authUser.uid,
+      ownerEmail:  authUser.email || '',
+      contributed: true,
+    });
+  } catch (e) {
+    console.error(e);
+    setContributeStatus('error', 'Something went wrong saving — please try again.');
+    btn.disabled = false;
+    return;
+  }
+
+  setContributeStatus('ok', "Saved! Reloading so you can fill the form…");
+  // Bounce them back through the same gate URL — now the cached fields exist,
+  // so the gate will render the auto-fill confirmation instead of this error.
+  setTimeout(() => window.location.reload(), 900);
 }
 
 // ─── Preloader ────────────────────────────────────────────────────────────
@@ -184,6 +365,7 @@ async function resolveForm() {
   let savedName = null;
   let inputForFn = route.value;
   if (route.kind === 'formId') {
+    contributeRouteFormId = route.value;
     fallbackUrl = `https://docs.google.com/forms/d/e/${route.value}/viewform`;
     try {
       const existing = await getAccordByFormId(route.value);
@@ -204,6 +386,29 @@ async function resolveForm() {
     } catch {}
   } else if (route.kind === 'url') {
     fallbackUrl = route.value;
+    contributeRouteFormId = extractFormId(route.value);
+    // Same cache check as the formId branch — without it, a successful
+    // contribute via /https:/<form-url> still re-fetches on reload and
+    // hits the same sign-in wall, never showing the cached fields.
+    if (contributeRouteFormId) {
+      try {
+        const existing = await getAccordByFormId(contributeRouteFormId);
+        if (existing) {
+          savedName = existing.name;
+          if (existing.formUrl) fallbackUrl = existing.formUrl;
+          if (Array.isArray(existing.fields) && existing.fields.length) {
+            resolved = {
+              source: 'url',
+              formId: contributeRouteFormId,
+              formUrl: existing.formUrl || route.value,
+              name: existing.name,
+              fields: existing.fields,
+            };
+            return;
+          }
+        }
+      } catch {}
+    }
   }
 
   resolved = { source: route.kind, formId: null, formUrl: null, name: savedName, fields: null };
@@ -227,6 +432,7 @@ async function fetchFieldsInto(target, inputUrl) {
   // 422, etc.) so we can hand the visitor a working link to the form even
   // when we can't read its questions.
   if (payload?.formUrl) fallbackUrl = payload.formUrl;
+  if (payload?.requiresSignIn) requiresSignIn = true;
   if (!res.ok || !Array.isArray(payload.fields)) {
     resolveError = 'unreadable';
     resolveErrorMsg = payload?.error || null;
@@ -450,7 +656,12 @@ onAuth(async user => {
   } else {
     visitorProfile = { fields: [] };
   }
-  if (initDone) renderAuthUI();
+  if (initDone) {
+    renderAuthUI();
+    // The contribute card's "sign in to contribute" note depends on authUser,
+    // so re-render it when auth state changes after the page has settled.
+    if (resolveError === 'unreadable') renderContributeCard();
+  }
 });
 
 init();
@@ -504,3 +715,15 @@ $('gate-edit-profile-btn')?.addEventListener('click', () => {
 $('gate-preview-toggle')?.addEventListener('click', () => {
   $('gate-preview').classList.toggle('collapsed');
 });
+
+// ─── Contribute handlers ─────────────────────────────────────────────────
+$('contribute-toggle')?.addEventListener('click', () => {
+  $('contribute-card').classList.toggle('collapsed');
+});
+
+$('contribute-textarea')?.addEventListener('input', (e) => {
+  const hasText = !!e.target.value.trim();
+  $('contribute-submit').disabled = !hasText;
+});
+
+$('contribute-submit')?.addEventListener('click', handleContributeSubmit);

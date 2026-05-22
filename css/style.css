@@ -1071,6 +1071,133 @@ nav, main, footer, .modal-overlay { position: relative; z-index: 1; }
 .redirect-text { font-family: var(--display); font-size: 22px; font-weight: 300; color: rgba(240,240,240,0.55); }
 .not-found { font-family: var(--display); font-size: 28px; font-weight: 300; color: rgba(240,240,240,0.4); text-align: center; max-width: 480px; padding: 0 20px; }
 .not-found-actions { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 20px; }
+.not-found-wrap {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 40px 16px;
+  box-sizing: border-box;
+}
+
+/* ── Contribute card (gate page, sign-in-walled forms) ── */
+.contribute-card {
+  width: 100%;
+  max-width: 480px;
+  border-radius: 16px;
+  padding: 0;
+  overflow: hidden;
+  margin-top: 8px;
+}
+.contribute-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 22px;
+  background: transparent;
+  border: 0;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--body);
+  transition: background 0.15s;
+}
+.contribute-header:hover { background: rgba(255,255,255,0.02); }
+.contribute-text { min-width: 0; }
+.contribute-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.contribute-sub {
+  font-size: 12.5px;
+  color: var(--text-dim);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+.contribute-chevron {
+  font-size: 14px;
+  color: var(--text-dim);
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+.contribute-card.collapsed .contribute-chevron { transform: rotate(-90deg); }
+.contribute-body {
+  padding: 4px 22px 22px;
+  border-top: 1px solid var(--glass-border);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.contribute-card.collapsed .contribute-body { display: none; }
+.contribute-steps {
+  margin: 14px 0 0;
+  padding-left: 22px;
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.6;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.contribute-steps strong { color: var(--text); font-weight: 600; }
+.contribute-textarea {
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.4;
+  resize: vertical;
+  min-height: 80px;
+  max-height: 200px;
+  word-break: break-all;
+}
+.contribute-status {
+  font-size: 12.5px;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+.contribute-status.is-error { color: #ff8888; }
+.contribute-status.is-ok    { color: #6be37a; }
+.contribute-signin-note {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  text-align: center;
+  margin: 0;
+  line-height: 1.5;
+}
+.spinner-sm {
+  width: 14px; height: 14px;
+  border: 1.5px solid rgba(255,255,255,0.15);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.85s linear infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* ── Contributed tag (dashboard card) ── */
+.contributed-tag {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: #6be37a;
+  background: rgba(107,227,122,0.08);
+  border: 1px solid rgba(107,227,122,0.18);
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
 
 /* ── Animations ── */
 @keyframes fadeUp {

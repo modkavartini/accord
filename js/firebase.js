@@ -192,12 +192,16 @@ export async function getAccordBySlug(slug) {
   return hydrateAccord(snap.docs[0]);
 }
 
-/** Find any accord saved for this form ID (used for showing a saved name on /go/<formId>). */
+/** Find any accord saved for this form ID (used for showing a saved name on /go/<formId>).
+ *  When multiple exist (e.g. an old stub without fields + a newer contributed
+ *  one), prefer the one that actually has parsed fields so the gate gets the
+ *  richest payload it can. */
 export async function getAccordByFormId(formId) {
   const q    = query(collection(db, 'accords'), where('formId', '==', formId));
   const snap = await getDocs(q);
   if (snap.empty) return null;
-  return hydrateAccord(snap.docs[0]);
+  const docs = snap.docs.map(hydrateAccord);
+  return docs.find(a => Array.isArray(a.fields) && a.fields.length) || docs[0];
 }
 
 function hydrateAccord(docSnap) {
