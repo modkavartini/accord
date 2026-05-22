@@ -70,37 +70,12 @@ function renderContributeCard() {
   $('contribute-signin-note').classList.toggle('hidden', !!authUser);
 }
 
-// Browsers block navigation to `view-source:` URLs from anchor clicks for
-// security reasons — it only works when the URL is typed/pasted into the
-// address bar directly. So we hand the user the link via clipboard and tell
-// them to paste it into a new tab themselves.
-async function handleCopySourceLink() {
-  const btn = $('contribute-source-btn');
-  if (!fallbackUrl || !btn) return;
-  const link = 'view-source:' + fallbackUrl;
-  const originalText = btn.dataset.originalText || btn.textContent;
-  btn.dataset.originalText = originalText;
-  try {
-    await navigator.clipboard.writeText(link);
-    btn.textContent = '✓ Copied — paste in a new tab';
-  } catch {
-    // Clipboard API can fail on insecure contexts or blocked permissions;
-    // fall back to selecting a hidden input the user can copy from.
-    try {
-      const ta = document.createElement('textarea');
-      ta.value = link;
-      ta.style.position = 'fixed';
-      ta.style.opacity = '0';
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      ta.remove();
-      btn.textContent = '✓ Copied — paste in a new tab';
-    } catch {
-      btn.textContent = "Couldn't copy — long-press to copy manually";
-    }
-  }
-  setTimeout(() => { btn.textContent = originalText; }, 2500);
+// Open the form in a new tab so the user can perform the pre-fill dance.
+// Plain `window.open` so the user keeps this gate tab around — closing it
+// would lose their place in the contribute flow.
+function handleOpenForm() {
+  if (!fallbackUrl) return;
+  window.open(fallbackUrl, '_blank', 'noopener,noreferrer');
 }
 
 function setContributeStatus(kind, msg) {
@@ -114,85 +89,58 @@ function setContributeStatus(kind, msg) {
     : msg;
 }
 
-// Walk the HTML to capture the FB_PUBLIC_LOAD_DATA_ array literal by counting
-// brackets — mirrors the server-side parser in netlify/functions/parse-form.js.
-function extractFbBlob(html) {
-  const marker = 'FB_PUBLIC_LOAD_DATA_';
-  const idx = html.indexOf(marker);
-  if (idx === -1) return null;
-  const start = html.indexOf('[', idx);
-  if (start === -1) return null;
+// A Google Forms pre-fill URL looks like:
+//   https://docs.google.com/forms/d/e/<formId>/viewform?usp=pp_url&entry.123=Name&entry.456=Email
+// The user types each question's *label* into the question itself, then
+// copies the pre-fill link Google generates — so each `entry.XXX=Label`
+// pair tells us "the question labelled Label has entry ID entry.XXX". That's
+// exactly the field schema Accord needs to auto-fill the form later.
+function parsePrefillUrl(raw) {
+  let url;
+  try { url = new URL(raw); }
+  catch { return { error: "That doesn't look like a valid link — make sure you copied the whole pre-filled URL." }; }
 
-  let depth = 0, inStr = false, quote = '', esc = false;
-  for (let i = start; i < html.length; i++) {
-    const c = html[i];
-    if (esc) { esc = false; continue; }
-    if (inStr) {
-      if (c === '\\') { esc = true; continue; }
-      if (c === quote) { inStr = false; quote = ''; }
-      continue;
-    }
-    if (c === '"' || c === "'") { inStr = true; quote = c; continue; }
-    if (c === '[') depth++;
-    else if (c === ']') {
-      depth--;
-      if (depth === 0) return html.slice(start, i + 1);
-    }
+  if (url.hostname !== 'docs.google.com' || !/\/forms\//.test(url.pathname)) {
+    return { error: 'That link isn\'t a Google Forms URL — copy the pre-filled link from the form\'s ⋮ menu.' };
   }
-  return null;
-}
 
-function parsePastedForm(html) {
-  const blob = extractFbBlob(html);
-  if (!blob) return { error: "Couldn't find form data in what you pasted — make sure you copied the whole page source." };
-
-  let data;
-  try { data = JSON.parse(blob); } catch { return { error: 'Form data was unreadable — try copying the source again.' }; }
-
-  const rawFields = data?.[1]?.[1];
-  if (!Array.isArray(rawFields)) return { error: 'No questions found in that source.' };
+  const idMatch = url.pathname.match(/\/forms\/d\/(?:e\/)?([A-Za-z0-9_-]{20,})/);
+  const formId = idMatch ? idMatch[1] : null;
+  if (!formId) return { error: "Couldn't read a form ID from that link." };
 
   const fields = [];
-  for (const f of rawFields) {
-    const label = (f?.[1] || '').toString().trim();
-    const subs  = f?.[4];
-    if (!Array.isArray(subs)) continue;
-    for (const s of subs) {
-      const entryNum = s?.[0];
-      if (typeof entryNum !== 'number') continue;
-      fields.push({ entryId: `entry.${entryNum}`, dummyValue: label });
-    }
+  const seen = new Set();
+  for (const [key, value] of url.searchParams.entries()) {
+    if (key !== 'emailAddress' && !/^entry\.\d+$/.test(key)) continue;
+    if (seen.has(key)) continue; // skip duplicate entries (multi-select)
+    seen.add(key);
+    const label = (value || '').trim();
+    if (!label) continue;
+    fields.push({ entryId: key, dummyValue: label });
   }
+  if (!fields.length) {
+    return { error: "That link has no pre-filled answers — fill in each question (using the question's own name as the answer) before generating the pre-fill link." };
+  }
+  // Same email-collection safety net as the server parser: forms with the
+  // "Collect email addresses" toggle use `emailAddress` instead of an entry
+  // ID, and Google silently drops the param on forms without it.
   if (!fields.some(f => f.entryId === 'emailAddress')) {
     fields.unshift({ entryId: 'emailAddress', dummyValue: 'Email' });
   }
-  if (!fields.length) return { error: 'No prefillable fields detected in that source.' };
 
-  // Pull the formId from any /forms/d/[/e/]<id> reference embedded in the page.
-  const idMatch = html.match(/forms\/d\/(?:e\/)?([A-Za-z0-9_-]{20,})/);
-  const formId = idMatch ? idMatch[1] : null;
-
-  let formTitle = '';
-  if (typeof data?.[3] === 'string') formTitle = data[3].trim();
-  else if (typeof data?.[1]?.[8] === 'string') formTitle = data[1][8].trim();
-  if (!formTitle) {
-    const tm = html.match(/<title[^>]*>([^<]*)<\/title>/i);
-    if (tm) formTitle = tm[1].replace(/\s*-\s*Google Forms\s*$/, '').trim();
-  }
-
-  return { formId, formTitle, fields };
+  return { formId, fields };
 }
 
 async function handleContributeSubmit() {
   const btn = $('contribute-submit');
   const ta  = $('contribute-textarea');
   const raw = (ta.value || '').trim();
-  if (!raw) { setContributeStatus('error', 'Paste the form source first.'); return; }
+  if (!raw) { setContributeStatus('error', 'Paste the pre-filled link first.'); return; }
 
-  setContributeStatus('loading', 'Reading the form…');
+  setContributeStatus('loading', 'Reading the link…');
   btn.disabled = true;
 
-  const parsed = parsePastedForm(raw);
+  const parsed = parsePrefillUrl(raw);
   if (parsed.error) {
     setContributeStatus('error', parsed.error);
     btn.disabled = false;
@@ -200,20 +148,15 @@ async function handleContributeSubmit() {
   }
 
   // Validate against the route's formId so a user can't paste Form A's
-  // source while looking at Form B — that would poison everyone else's
-  // auto-fill experience for B.
+  // pre-fill link while looking at Form B — that would poison everyone
+  // else's auto-fill experience for B.
   const expectedFormId = contributeRouteFormId || extractFormId(fallbackUrl) || null;
-  if (expectedFormId && parsed.formId && parsed.formId !== expectedFormId) {
-    setContributeStatus('error', "That source is from a different form — please open the source view for this exact link.");
+  if (expectedFormId && parsed.formId !== expectedFormId) {
+    setContributeStatus('error', "That link is for a different form — please generate the pre-fill link from this exact form.");
     btn.disabled = false;
     return;
   }
-  const finalFormId = parsed.formId || expectedFormId;
-  if (!finalFormId) {
-    setContributeStatus('error', "Couldn't determine the form ID — try copying the source again.");
-    btn.disabled = false;
-    return;
-  }
+  const finalFormId = parsed.formId;
 
   // Require sign-in so the contribution shows up on a real dashboard.
   if (!authUser) {
@@ -234,7 +177,9 @@ async function handleContributeSubmit() {
   try {
     await createAccord({
       id:          nanoid(),
-      name:        parsed.formTitle || 'Untitled form',
+      // No form title in the pre-fill URL — fall back to a generic name the
+      // contributor can rename later from their dashboard.
+      name:        'Contributed form',
       slug:        null,
       formId:      finalFormId,
       formUrl,
@@ -375,6 +320,7 @@ async function resolveForm() {
         formUrl: accord.formUrl,
         name: accord.name,
         fields: Array.isArray(accord.fields) ? accord.fields : null,
+        contributed: !!accord.contributed,
       };
       fallbackUrl = resolved.formUrl || null;
       if (!resolved.fields) await fetchFieldsInto(resolved);
@@ -411,6 +357,7 @@ async function resolveForm() {
             formUrl: existing.formUrl,
             name: existing.name,
             fields: existing.fields,
+            contributed: !!existing.contributed,
           };
           return;
         }
@@ -435,6 +382,7 @@ async function resolveForm() {
               formUrl: existing.formUrl || route.value,
               name: existing.name,
               fields: existing.fields,
+              contributed: !!existing.contributed,
             };
             return;
           }
@@ -672,6 +620,10 @@ async function init() {
   $('gate-invited-label').textContent =
     resolved.source === 'slug' ? "YOU'VE BEEN INVITED TO" : "AUTO-FILLING";
   document.title = `${resolved.name || 'Accord'} — Accord`;
+  // Tell the visitor when the field schema came from another Accord user
+  // rather than Accord's own server-side fetch — the form requires sign-in,
+  // so a contributor walked through the pre-fill-link flow to teach us.
+  $('gate-contributed-note').classList.toggle('hidden', !resolved.contributed);
 
   show('gate');
   hidePreloader();
@@ -758,5 +710,5 @@ $('contribute-textarea')?.addEventListener('input', (e) => {
   $('contribute-submit').disabled = !hasText;
 });
 
-$('contribute-source-btn')?.addEventListener('click', handleCopySourceLink);
+$('contribute-source-btn')?.addEventListener('click', handleOpenForm);
 $('contribute-submit')?.addEventListener('click', handleContributeSubmit);

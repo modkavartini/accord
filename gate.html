@@ -59,13 +59,13 @@
     </button>
     <div class="contribute-body" id="contribute-body">
       <ol class="contribute-steps">
-        <li>Tap <strong>Copy source link</strong> below — it copies a special <code>view-source:</code> link to your clipboard.</li>
-        <li>Open a <strong>new browser tab</strong>, paste it into the address bar, and hit Enter. The form loads as raw HTML (you're already signed in to Google).</li>
-        <li>Long-press anywhere on that page, choose <strong>Select all</strong> → <strong>Copy</strong>.</li>
-        <li>Come back here and paste the source below.</li>
+        <li>Tap <strong>Proceed to form</strong> below — it opens the form in a new tab.</li>
+        <li>In each question, type the question's <strong>own name as the answer</strong> (e.g. type <code>Name</code> in the Name question, <code>Email</code> in the Email question, <code>College</code> in the College question, etc.).</li>
+        <li>Tap the <strong>⋮ menu</strong> at the top right of the form and choose <strong>Get pre-filled link</strong> → <strong>Get link</strong> → <strong>Copy link</strong>.</li>
+        <li>Come back here and paste the pre-filled link below.</li>
       </ol>
-      <button type="button" class="btn btn-ghost w-full" id="contribute-source-btn" style="justify-content:center;">Copy source link</button>
-      <textarea class="input contribute-textarea" id="contribute-textarea" placeholder="Paste the copied source code here…" rows="3" spellcheck="false" autocomplete="off"></textarea>
+      <button type="button" class="btn btn-ghost w-full" id="contribute-source-btn" style="justify-content:center;">Proceed to form →</button>
+      <textarea class="input contribute-textarea" id="contribute-textarea" placeholder="Paste the pre-filled link here…" rows="2" spellcheck="false" autocomplete="off"></textarea>
       <p class="contribute-status hidden" id="contribute-status"></p>
       <button class="btn btn-primary w-full" id="contribute-submit" style="justify-content:center;padding:14px;" disabled>Teach Accord this form ✦</button>
       <p class="contribute-signin-note hidden" id="contribute-signin-note">You'll need to sign in with Google to contribute — your account just gets a "Contributed" entry on your dashboard.</p>
@@ -87,6 +87,10 @@
     <h1 class="gate-title" id="gate-accord-name"></h1>
     <p class="gate-sub">
       Sign in with Google to verify your identity and auto-fill the form with your saved profile.
+    </p>
+    <p class="gate-contributed-note hidden" id="gate-contributed-note">
+      <span class="gate-contributed-icon" aria-hidden="true">ⓘ</span>
+      This form's fields were contributed by another Accord user — Accord couldn't fetch them automatically because the form requires Google sign-in.
     </p>
 
     <!-- Not signed in -->
