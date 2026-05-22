@@ -66,9 +66,41 @@ function renderContributeCard() {
     return;
   }
   card.classList.remove('hidden');
-  $('contribute-source-btn').href = 'view-source:' + fallbackUrl;
   // Sign-in note visible only when not yet authed.
   $('contribute-signin-note').classList.toggle('hidden', !!authUser);
+}
+
+// Browsers block navigation to `view-source:` URLs from anchor clicks for
+// security reasons — it only works when the URL is typed/pasted into the
+// address bar directly. So we hand the user the link via clipboard and tell
+// them to paste it into a new tab themselves.
+async function handleCopySourceLink() {
+  const btn = $('contribute-source-btn');
+  if (!fallbackUrl || !btn) return;
+  const link = 'view-source:' + fallbackUrl;
+  const originalText = btn.dataset.originalText || btn.textContent;
+  btn.dataset.originalText = originalText;
+  try {
+    await navigator.clipboard.writeText(link);
+    btn.textContent = '✓ Copied — paste in a new tab';
+  } catch {
+    // Clipboard API can fail on insecure contexts or blocked permissions;
+    // fall back to selecting a hidden input the user can copy from.
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = link;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+      btn.textContent = '✓ Copied — paste in a new tab';
+    } catch {
+      btn.textContent = "Couldn't copy — long-press to copy manually";
+    }
+  }
+  setTimeout(() => { btn.textContent = originalText; }, 2500);
 }
 
 function setContributeStatus(kind, msg) {
@@ -726,4 +758,5 @@ $('contribute-textarea')?.addEventListener('input', (e) => {
   $('contribute-submit').disabled = !hasText;
 });
 
+$('contribute-source-btn')?.addEventListener('click', handleCopySourceLink);
 $('contribute-submit')?.addEventListener('click', handleContributeSubmit);

@@ -52,18 +52,19 @@
   <div class="contribute-card glass hidden collapsed" id="contribute-card">
     <button class="contribute-header" id="contribute-toggle" type="button">
       <div class="contribute-text">
-        <p class="contribute-title">Help others fill this form</p>
+        <p class="contribute-title">Help Accord auto-fill this form</p>
         <p class="contribute-sub">Teach Accord this form's questions once — every future visitor gets auto-fill instantly.</p>
       </div>
       <span class="contribute-chevron" aria-hidden="true">▾</span>
     </button>
     <div class="contribute-body" id="contribute-body">
       <ol class="contribute-steps">
-        <li>Tap <strong>Open form source</strong> below. You're signed in to Google there, so the form loads as raw HTML.</li>
-        <li>Long-press anywhere on the page, choose <strong>Select all</strong>, then <strong>Copy</strong>.</li>
-        <li>Hit your browser's back button to return here, then paste the source below.</li>
+        <li>Tap <strong>Copy source link</strong> below — it copies a special <code>view-source:</code> link to your clipboard.</li>
+        <li>Open a <strong>new browser tab</strong>, paste it into the address bar, and hit Enter. The form loads as raw HTML (you're already signed in to Google).</li>
+        <li>Long-press anywhere on that page, choose <strong>Select all</strong> → <strong>Copy</strong>.</li>
+        <li>Come back here and paste the source below.</li>
       </ol>
-      <a class="btn btn-ghost w-full" id="contribute-source-btn" target="_blank" rel="noopener noreferrer" style="justify-content:center;">Open form source →</a>
+      <button type="button" class="btn btn-ghost w-full" id="contribute-source-btn" style="justify-content:center;">Copy source link</button>
       <textarea class="input contribute-textarea" id="contribute-textarea" placeholder="Paste the copied source code here…" rows="3" spellcheck="false" autocomplete="off"></textarea>
       <p class="contribute-status hidden" id="contribute-status"></p>
       <button class="btn btn-primary w-full" id="contribute-submit" style="justify-content:center;padding:14px;" disabled>Teach Accord this form ✦</button>
