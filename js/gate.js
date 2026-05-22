@@ -89,82 +89,150 @@ function setContributeStatus(kind, msg) {
     : msg;
 }
 
-// A Google Forms pre-fill URL looks like:
-//   https://docs.google.com/forms/d/e/<formId>/viewform?usp=pp_url&entry.123=Name&entry.456=Email
-// The user types each question's *label* into the question itself, then
-// copies the pre-fill link Google generates — so each `entry.XXX=Label`
-// pair tells us "the question labelled Label has entry ID entry.XXX". That's
-// exactly the field schema Accord needs to auto-fill the form later.
-function parsePrefillUrl(raw) {
-  let url;
-  try { url = new URL(raw); }
-  catch { return { error: "That doesn't look like a valid link — make sure you copied the whole pre-filled URL." }; }
+// Walk the HTML to capture the FB_PUBLIC_LOAD_DATA_ array literal by counting
+// brackets — mirrors the server-side parser in netlify/functions/parse-form.js.
+function extractFbBlob(html) {
+  const marker = 'FB_PUBLIC_LOAD_DATA_';
+  const idx = html.indexOf(marker);
+  if (idx === -1) return null;
+  const start = html.indexOf('[', idx);
+  if (start === -1) return null;
 
-  if (url.hostname !== 'docs.google.com' || !/\/forms\//.test(url.pathname)) {
-    return { error: 'That link isn\'t a Google Forms URL — copy the pre-filled link from the form\'s ⋮ menu.' };
+  let depth = 0, inStr = false, quote = '', esc = false;
+  for (let i = start; i < html.length; i++) {
+    const c = html[i];
+    if (esc) { esc = false; continue; }
+    if (inStr) {
+      if (c === '\\') { esc = true; continue; }
+      if (c === quote) { inStr = false; quote = ''; }
+      continue;
+    }
+    if (c === '"' || c === "'") { inStr = true; quote = c; continue; }
+    if (c === '[') depth++;
+    else if (c === ']') {
+      depth--;
+      if (depth === 0) return html.slice(start, i + 1);
+    }
   }
+  return null;
+}
 
-  const idMatch = url.pathname.match(/\/forms\/d\/(?:e\/)?([A-Za-z0-9_-]{20,})/);
-  const formId = idMatch ? idMatch[1] : null;
-  if (!formId) return { error: "Couldn't read a form ID from that link." };
+// Chrome on Android saves pages as MHTML (multipart/related) by default,
+// which wraps the HTML in MIME parts with quoted-printable encoding —
+// so `[`, `]`, `<`, etc. show up as `=5B`, `=5D`, `=3C`. The bracket-
+// counting parser above can't see through that. We detect MHTML by its
+// signature headers and decode the QP body before parsing.
+function looksLikeMhtml(text) {
+  const head = text.slice(0, 2048);
+  return /^(From:|MIME-Version:|Content-Type:\s*multipart\/related)/im.test(head)
+      || /Content-Type:\s*multipart\/related/i.test(head);
+}
+function decodeQuotedPrintable(text) {
+  return text
+    // Soft line breaks: an `=` at end of line means "join with next line".
+    .replace(/=\r?\n/g, '')
+    // Hex escapes: `=XX` → byte. We treat XX as the code point directly;
+    // for ASCII (which covers all FB_PUBLIC_LOAD_DATA_ structural chars)
+    // this is exact. Non-ASCII labels could be subtly off but they survive
+    // through JSON.parse string handling either way.
+    .replace(/=([0-9A-Fa-f]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+}
+function normalizeFormSource(text) {
+  if (!looksLikeMhtml(text)) return text;
+  // Strip MIME headers + boundaries by stitching all parts together — the
+  // FB_PUBLIC_LOAD_DATA_ blob lives in the HTML part, but we don't bother
+  // picking it out; decoding QP across the whole file works fine because
+  // every non-HTML part is base64/binary and won't contain the marker.
+  return decodeQuotedPrintable(text);
+}
+
+function parseFormSource(text) {
+  const html = normalizeFormSource(text);
+  const blob = extractFbBlob(html);
+  if (!blob) return { error: "Couldn't find form data in that file — make sure you downloaded the actual form page (not a sign-in page or an error page)." };
+
+  let data;
+  try { data = JSON.parse(blob); } catch { return { error: 'Form data was unreadable — please try downloading the form again.' }; }
+
+  const rawFields = data?.[1]?.[1];
+  if (!Array.isArray(rawFields)) return { error: 'No questions found in that file.' };
 
   const fields = [];
-  const seen = new Set();
-  for (const [key, value] of url.searchParams.entries()) {
-    if (key !== 'emailAddress' && !/^entry\.\d+$/.test(key)) continue;
-    if (seen.has(key)) continue; // skip duplicate entries (multi-select)
-    seen.add(key);
-    const label = (value || '').trim();
-    if (!label) continue;
-    fields.push({ entryId: key, dummyValue: label });
+  for (const f of rawFields) {
+    const label = (f?.[1] || '').toString().trim();
+    const subs  = f?.[4];
+    if (!Array.isArray(subs)) continue;
+    for (const s of subs) {
+      const entryNum = s?.[0];
+      if (typeof entryNum !== 'number') continue;
+      fields.push({ entryId: `entry.${entryNum}`, dummyValue: label });
+    }
   }
-  if (!fields.length) {
-    return { error: "That link has no pre-filled answers — fill in each question (using the question's own name as the answer) before generating the pre-fill link." };
-  }
-  // Same email-collection safety net as the server parser: forms with the
-  // "Collect email addresses" toggle use `emailAddress` instead of an entry
-  // ID, and Google silently drops the param on forms without it.
+  // Same email-collection safety net as the server parser.
   if (!fields.some(f => f.entryId === 'emailAddress')) {
     fields.unshift({ entryId: 'emailAddress', dummyValue: 'Email' });
   }
+  if (!fields.length) return { error: 'No prefillable fields detected in that file.' };
 
-  return { formId, fields };
+  const idMatch = html.match(/forms\/d\/(?:e\/)?([A-Za-z0-9_-]{20,})/);
+  const formId = idMatch ? idMatch[1] : null;
+
+  let formTitle = '';
+  if (typeof data?.[3] === 'string') formTitle = data[3].trim();
+  else if (typeof data?.[1]?.[8] === 'string') formTitle = data[1][8].trim();
+  if (!formTitle) {
+    const tm = html.match(/<title[^>]*>([^<]*)<\/title>/i);
+    if (tm) formTitle = tm[1].replace(/\s*-\s*Google Forms\s*$/, '').trim();
+  }
+
+  return { formId, formTitle, fields };
 }
 
 async function handleContributeSubmit() {
-  const btn   = $('contribute-submit');
-  const ta    = $('contribute-textarea');
-  const titleInput = $('contribute-title');
-  const raw   = (ta.value || '').trim();
-  const title = (titleInput?.value || '').trim();
-  if (!title) { setContributeStatus('error', 'Enter the form title first.'); return; }
-  if (!raw)   { setContributeStatus('error', 'Paste the pre-filled link too.'); return; }
+  const btn    = $('contribute-submit');
+  const fileEl = $('contribute-file');
+  const file   = fileEl?.files?.[0];
+  if (!file) { setContributeStatus('error', 'Choose the downloaded form file first.'); return; }
 
-  setContributeStatus('loading', 'Reading the link…');
+  setContributeStatus('loading', 'Reading the file…');
   btn.disabled = true;
 
-  const parsed = parsePrefillUrl(raw);
-  console.log('[accord/contribute] parsed pre-fill URL', { raw, parsed });
+  let text;
+  try {
+    text = await file.text();
+  } catch (e) {
+    console.error('[accord/contribute] file read failed', e);
+    setContributeStatus('error', "Couldn't read that file — try downloading it again.");
+    btn.disabled = false;
+    return;
+  }
+  console.log('[accord/contribute] file read', { name: file.name, size: file.size, type: file.type });
+
+  const parsed = parseFormSource(text);
+  console.log('[accord/contribute] parsed file', parsed);
   if (parsed.error) {
     setContributeStatus('error', parsed.error);
     btn.disabled = false;
     return;
   }
 
-  // The pre-fill URL's formId is the source of truth — we save the accord
-  // keyed by THAT, not by the route's formId. A mismatch most likely means
-  // the user pasted the wrong form's link, so we warn but don't block —
-  // the worst case is a "Contributed form" entry on their dashboard for the
-  // wrong form, which they can delete. (Anti-poisoning isn't actually at
-  // stake here: the saved accord is keyed by parsed.formId, so it won't
-  // surface for visitors of any *other* form's gate URL.)
+  // The parsed formId is the source of truth — we save the accord keyed by
+  // THAT, not by the route's formId. A mismatch most likely means the user
+  // uploaded the wrong form's file; we warn but don't block (the saved
+  // accord is keyed by parsed.formId, so it can't surface for any *other*
+  // form's gate URL anyway).
   const expectedFormId = contributeRouteFormId || extractFormId(fallbackUrl) || null;
   const finalFormId    = parsed.formId;
   console.log('[accord/contribute] formId check', { expectedFormId, parsedFormId: finalFormId });
+  if (!finalFormId) {
+    setContributeStatus('error', "Couldn't determine the form ID from that file. Make sure you downloaded the form page itself, not a different page.");
+    btn.disabled = false;
+    return;
+  }
   if (expectedFormId && finalFormId !== expectedFormId) {
-    console.warn('[accord/contribute] formId mismatch — saving under the pre-fill URL\'s formId anyway');
+    console.warn('[accord/contribute] formId mismatch — saving under file\'s formId anyway');
     setContributeStatus('loading',
-      `Heads up: that link's form ID (${shortId(finalFormId)}) doesn't match this page's (${shortId(expectedFormId)}). Saving anyway under the pasted link's form…`);
+      `Heads up: this file's form ID (${shortId(finalFormId)}) doesn't match this page's (${shortId(expectedFormId)}). Saving anyway under the file's form…`);
   }
 
   // Require sign-in so the contribution shows up on a real dashboard.
@@ -188,7 +256,7 @@ async function handleContributeSubmit() {
     : `https://docs.google.com/forms/d/e/${finalFormId}/viewform`;
   const accord = {
     id:          nanoid(),
-    name:        title,
+    name:        parsed.formTitle || 'Contributed form',
     slug:        null,
     formId:      finalFormId,
     formUrl,
@@ -751,13 +819,11 @@ $('contribute-toggle')?.addEventListener('click', () => {
   $('contribute-card').classList.toggle('collapsed');
 });
 
-function refreshContributeSubmitState() {
-  const hasTitle = !!$('contribute-title')?.value.trim();
-  const hasLink  = !!$('contribute-textarea')?.value.trim();
-  $('contribute-submit').disabled = !(hasTitle && hasLink);
-}
-$('contribute-textarea')?.addEventListener('input', refreshContributeSubmitState);
-$('contribute-title')?.addEventListener('input',    refreshContributeSubmitState);
+$('contribute-file')?.addEventListener('change', (e) => {
+  const file = e.target.files?.[0];
+  $('contribute-submit').disabled = !file;
+  $('contribute-file-text').textContent = file ? `📄 ${file.name}` : 'Choose form file';
+});
 
 $('contribute-source-btn')?.addEventListener('click', handleOpenForm);
 $('contribute-submit')?.addEventListener('click', handleContributeSubmit);

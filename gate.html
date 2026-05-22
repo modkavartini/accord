@@ -58,21 +58,18 @@
       <span class="contribute-chevron" aria-hidden="true">▾</span>
     </button>
     <div class="contribute-body" id="contribute-body">
-      <p class="contribute-prereq">
-        <strong>Heads up:</strong> only people with <strong>owner or editor access</strong> to this form can do this — Google's "Get pre-filled link" option is only available to admins of the form.
-      </p>
       <ol class="contribute-steps">
         <li>Tap <strong>Proceed to form</strong> below — it opens the form in a new tab.</li>
-        <li>On the form, tap the <strong>✏️ edit (pencil) icon</strong> at the bottom right to enter edit mode.</li>
-        <li>While there, copy the <strong>form's title</strong> (shown at the top of the form) and paste it into the "Form title" field below.</li>
-        <li>In the editor, tap the <strong>⋮ menu</strong> at the top right and choose <strong>Get pre-filled link</strong>.</li>
-        <li>In each question, type the question's <strong>own name as the answer</strong> (e.g. <code>Name</code> in the Name question, <code>Email</code> in the Email question, <code>College</code> in the College question, etc.).</li>
-        <li>Tap <strong>Get link</strong> → <strong>Copy link</strong>.</li>
-        <li>Come back here and paste the pre-filled link into the "Pre-filled link" field below.</li>
+        <li>On the form page, tap your browser's <strong>⋮ menu</strong> (top right in Chrome).</li>
+        <li>Tap the <strong>⬇ Download</strong> icon to save the page to your device.</li>
+        <li>Come back here, tap <strong>Choose form file</strong> below, and pick the file you just downloaded (it'll be in your <em>Downloads</em> folder).</li>
+        <li>Accord will read the form's questions from the file and add it as a contributed form on your dashboard.</li>
       </ol>
       <button type="button" class="btn btn-ghost w-full" id="contribute-source-btn" style="justify-content:center;">Proceed to form →</button>
-      <input type="text" class="input" id="contribute-title" placeholder="Form title (paste from the form's header)" autocomplete="off" />
-      <textarea class="input contribute-textarea" id="contribute-textarea" placeholder="Pre-filled link (paste from Google's ⋮ → Get pre-filled link)" rows="2" spellcheck="false" autocomplete="off"></textarea>
+      <label class="btn btn-ghost w-full contribute-file-label" id="contribute-file-label" for="contribute-file" style="justify-content:center;cursor:pointer;">
+        <span id="contribute-file-text">Choose form file</span>
+      </label>
+      <input type="file" id="contribute-file" accept=".html,.htm,.mhtml,.mht,text/html,multipart/related" hidden />
       <p class="contribute-status hidden" id="contribute-status"></p>
       <button class="btn btn-primary w-full" id="contribute-submit" style="justify-content:center;padding:14px;" disabled>Teach Accord this form ✦</button>
       <p class="contribute-signin-note hidden" id="contribute-signin-note">You'll need to sign in with Google to contribute — your account just gets a "Contributed" entry on your dashboard.</p>
