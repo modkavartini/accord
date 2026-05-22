@@ -64,13 +64,15 @@
       <ol class="contribute-steps">
         <li>Tap <strong>Proceed to form</strong> below — it opens the form in a new tab.</li>
         <li>On the form, tap the <strong>✏️ edit (pencil) icon</strong> at the bottom right to enter edit mode.</li>
+        <li>While there, copy the <strong>form's title</strong> (shown at the top of the form) and paste it into the "Form title" field below.</li>
         <li>In the editor, tap the <strong>⋮ menu</strong> at the top right and choose <strong>Get pre-filled link</strong>.</li>
         <li>In each question, type the question's <strong>own name as the answer</strong> (e.g. <code>Name</code> in the Name question, <code>Email</code> in the Email question, <code>College</code> in the College question, etc.).</li>
         <li>Tap <strong>Get link</strong> → <strong>Copy link</strong>.</li>
-        <li>Come back here and paste the pre-filled link below.</li>
+        <li>Come back here and paste the pre-filled link into the "Pre-filled link" field below.</li>
       </ol>
       <button type="button" class="btn btn-ghost w-full" id="contribute-source-btn" style="justify-content:center;">Proceed to form →</button>
-      <textarea class="input contribute-textarea" id="contribute-textarea" placeholder="Paste the pre-filled link here…" rows="2" spellcheck="false" autocomplete="off"></textarea>
+      <input type="text" class="input" id="contribute-title" placeholder="Form title (paste from the form's header)" autocomplete="off" />
+      <textarea class="input contribute-textarea" id="contribute-textarea" placeholder="Pre-filled link (paste from Google's ⋮ → Get pre-filled link)" rows="2" spellcheck="false" autocomplete="off"></textarea>
       <p class="contribute-status hidden" id="contribute-status"></p>
       <button class="btn btn-primary w-full" id="contribute-submit" style="justify-content:center;padding:14px;" disabled>Teach Accord this form ✦</button>
       <p class="contribute-signin-note hidden" id="contribute-signin-note">You'll need to sign in with Google to contribute — your account just gets a "Contributed" entry on your dashboard.</p>

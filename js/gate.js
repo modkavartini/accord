@@ -132,31 +132,40 @@ function parsePrefillUrl(raw) {
 }
 
 async function handleContributeSubmit() {
-  const btn = $('contribute-submit');
-  const ta  = $('contribute-textarea');
-  const raw = (ta.value || '').trim();
-  if (!raw) { setContributeStatus('error', 'Paste the pre-filled link first.'); return; }
+  const btn   = $('contribute-submit');
+  const ta    = $('contribute-textarea');
+  const titleInput = $('contribute-title');
+  const raw   = (ta.value || '').trim();
+  const title = (titleInput?.value || '').trim();
+  if (!title) { setContributeStatus('error', 'Enter the form title first.'); return; }
+  if (!raw)   { setContributeStatus('error', 'Paste the pre-filled link too.'); return; }
 
   setContributeStatus('loading', 'Reading the link…');
   btn.disabled = true;
 
   const parsed = parsePrefillUrl(raw);
+  console.log('[accord/contribute] parsed pre-fill URL', { raw, parsed });
   if (parsed.error) {
     setContributeStatus('error', parsed.error);
     btn.disabled = false;
     return;
   }
 
-  // Validate against the route's formId so a user can't paste Form A's
-  // pre-fill link while looking at Form B — that would poison everyone
-  // else's auto-fill experience for B.
+  // The pre-fill URL's formId is the source of truth — we save the accord
+  // keyed by THAT, not by the route's formId. A mismatch most likely means
+  // the user pasted the wrong form's link, so we warn but don't block —
+  // the worst case is a "Contributed form" entry on their dashboard for the
+  // wrong form, which they can delete. (Anti-poisoning isn't actually at
+  // stake here: the saved accord is keyed by parsed.formId, so it won't
+  // surface for visitors of any *other* form's gate URL.)
   const expectedFormId = contributeRouteFormId || extractFormId(fallbackUrl) || null;
-  if (expectedFormId && parsed.formId !== expectedFormId) {
-    setContributeStatus('error', "That link is for a different form — please generate the pre-fill link from this exact form.");
-    btn.disabled = false;
-    return;
+  const finalFormId    = parsed.formId;
+  console.log('[accord/contribute] formId check', { expectedFormId, parsedFormId: finalFormId });
+  if (expectedFormId && finalFormId !== expectedFormId) {
+    console.warn('[accord/contribute] formId mismatch — saving under the pre-fill URL\'s formId anyway');
+    setContributeStatus('loading',
+      `Heads up: that link's form ID (${shortId(finalFormId)}) doesn't match this page's (${shortId(expectedFormId)}). Saving anyway under the pasted link's form…`);
   }
-  const finalFormId = parsed.formId;
 
   // Require sign-in so the contribution shows up on a real dashboard.
   if (!authUser) {
@@ -165,40 +174,50 @@ async function handleContributeSubmit() {
       const result = await signInWithGoogle();
       authUser = result.user;
       try { visitorProfile = await ensureProfileSeeded(result.user); } catch {}
-    } catch {
+    } catch (e) {
+      console.error('[accord/contribute] sign-in failed', e);
       setContributeStatus('error', 'Sign-in cancelled. Try again to contribute.');
       btn.disabled = false;
       return;
     }
   }
 
-  setContributeStatus('loading', 'Saving to Accord…');
-  const formUrl = fallbackUrl || `https://docs.google.com/forms/d/e/${finalFormId}/viewform`;
+  setContributeStatus('loading', `Saving ${parsed.fields.length} field${parsed.fields.length === 1 ? '' : 's'} to Accord…`);
+  const formUrl = fallbackUrl && extractFormId(fallbackUrl) === finalFormId
+    ? fallbackUrl
+    : `https://docs.google.com/forms/d/e/${finalFormId}/viewform`;
+  const accord = {
+    id:          nanoid(),
+    name:        title,
+    slug:        null,
+    formId:      finalFormId,
+    formUrl,
+    fields:      parsed.fields,
+    ownerId:     authUser.uid,
+    ownerEmail:  authUser.email || '',
+    contributed: true,
+  };
+  console.log('[accord/contribute] saving accord', accord);
   try {
-    await createAccord({
-      id:          nanoid(),
-      // No form title in the pre-fill URL — fall back to a generic name the
-      // contributor can rename later from their dashboard.
-      name:        'Contributed form',
-      slug:        null,
-      formId:      finalFormId,
-      formUrl,
-      fields:      parsed.fields,
-      ownerId:     authUser.uid,
-      ownerEmail:  authUser.email || '',
-      contributed: true,
-    });
+    await createAccord(accord);
   } catch (e) {
-    console.error(e);
-    setContributeStatus('error', 'Something went wrong saving — please try again.');
+    console.error('[accord/contribute] save failed', e);
+    const msg = e?.code ? `Save failed (${e.code}). Check console for details.` : 'Something went wrong saving — check console for details.';
+    setContributeStatus('error', msg);
     btn.disabled = false;
     return;
   }
 
-  setContributeStatus('ok', "Saved! Reloading so you can fill the form…");
+  setContributeStatus('ok', `Saved ${parsed.fields.length} field${parsed.fields.length === 1 ? '' : 's'}! Reloading…`);
   // Bounce them back through the same gate URL — now the cached fields exist,
   // so the gate will render the auto-fill confirmation instead of this error.
   setTimeout(() => window.location.reload(), 900);
+}
+
+// Truncate a long form ID for display in inline status text.
+function shortId(id) {
+  if (!id) return '?';
+  return id.length > 14 ? `${id.slice(0, 6)}…${id.slice(-4)}` : id;
 }
 
 // ─── Preloader ────────────────────────────────────────────────────────────
@@ -333,6 +352,33 @@ async function resolveForm() {
       fallbackUrl = shortUrl;
       resolved = { source: 'short', formId: null, formUrl: null, name: null, fields: null };
       await fetchFieldsInto(resolved, shortUrl);
+      // Even when parse-form fails (sign-in-walled forms), it returns the
+      // canonical /forms/d/e/<id>/viewform URL in the error payload — which
+      // we stash on fallbackUrl. That gives us a formId we can use to check
+      // the contributed-accords cache. Without this, a contribution saved
+      // under the real formId is invisible on the next visit to /go/<short>.
+      if (resolveError === 'unreadable') {
+        const discoveredId = extractFormId(fallbackUrl);
+        if (discoveredId) {
+          contributeRouteFormId = discoveredId;
+          try {
+            const existing = await getAccordByFormId(discoveredId);
+            if (existing && Array.isArray(existing.fields) && existing.fields.length) {
+              resolved = {
+                source: 'short',
+                formId: discoveredId,
+                formUrl: existing.formUrl || fallbackUrl,
+                name: existing.name,
+                fields: existing.fields,
+                contributed: !!existing.contributed,
+              };
+              resolveError = null;
+              resolveErrorMsg = null;
+              requiresSignIn = false;
+            }
+          } catch (e) { console.warn('[accord/gate] short-code cache lookup failed', e); }
+        }
+      }
       return;
     }
     resolveError = 'not-found';
@@ -705,10 +751,13 @@ $('contribute-toggle')?.addEventListener('click', () => {
   $('contribute-card').classList.toggle('collapsed');
 });
 
-$('contribute-textarea')?.addEventListener('input', (e) => {
-  const hasText = !!e.target.value.trim();
-  $('contribute-submit').disabled = !hasText;
-});
+function refreshContributeSubmitState() {
+  const hasTitle = !!$('contribute-title')?.value.trim();
+  const hasLink  = !!$('contribute-textarea')?.value.trim();
+  $('contribute-submit').disabled = !(hasTitle && hasLink);
+}
+$('contribute-textarea')?.addEventListener('input', refreshContributeSubmitState);
+$('contribute-title')?.addEventListener('input',    refreshContributeSubmitState);
 
 $('contribute-source-btn')?.addEventListener('click', handleOpenForm);
 $('contribute-submit')?.addEventListener('click', handleContributeSubmit);
