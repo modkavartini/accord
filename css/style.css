@@ -905,7 +905,7 @@ nav, main, footer, .modal-overlay { position: relative; z-index: 1; }
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding-left: 52px; /* aligns with label, past the toggle */
+  padding-left: 46px; /* aligns with label past the 34px preview-toggle + 12px gap */
 }
 .pf-rule-line { margin: 0; line-height: 1; }
 .pf-keyword {

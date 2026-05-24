@@ -1,6 +1,8 @@
 package com.accord.app
 
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import org.json.JSONObject
@@ -60,6 +62,24 @@ class AccordBridge(
     @JavascriptInterface
     fun signOut() {
         onSignOut()
+    }
+
+    /**
+     * Open a URL in the user's default browser without touching the WebView.
+     * The contribute flow uses this so the visitor's "Proceed to form" tap
+     * doesn't trigger the WebView's navigation handler (which would call
+     * finish() and drop them back to the app's home screen). After this
+     * fires, the gate page stays right where it was — the user switches
+     * back to the Accord app, sees the contribute card still expanded,
+     * and uploads the downloaded form file.
+     */
+    @JavascriptInterface
+    fun openInBrowser(url: String?) {
+        if (url.isNullOrBlank()) return
+        val uri = runCatching { Uri.parse(url) }.getOrNull() ?: return
+        val intent = Intent(Intent.ACTION_VIEW, uri)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        runCatching { appContext.startActivity(intent) }
     }
 
     /**

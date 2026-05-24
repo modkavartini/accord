@@ -146,9 +146,9 @@ function renderFields() {
     return `
       <div class="profile-field-card${enabled ? '' : ' is-disabled'}" data-id="${escHtml(f.id)}">
         <div class="pf-top">
-          <label class="toggle" title="${enabled ? 'Disable' : 'Enable'} this rule">
+          <label class="preview-toggle" title="${enabled ? 'Disable' : 'Enable'} this rule">
             <input type="checkbox" data-toggle="${escHtml(f.id)}" ${enabled ? 'checked' : ''} />
-            <span class="toggle-slider"></span>
+            <span class="preview-toggle-knob"></span>
           </label>
           <p class="pf-label">${escHtml(f.label || '(unlabeled)')}</p>
           <button class="btn btn-ghost btn-sm" data-edit="${escHtml(f.id)}">Edit</button>

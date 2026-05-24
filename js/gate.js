@@ -69,59 +69,26 @@ function renderContributeCard() {
   card.classList.remove('hidden');
   // Sign-in note visible only when not yet authed.
   $('contribute-signin-note').classList.toggle('hidden', !!authUser);
-  // The native app's WebView resets to the home screen when we call
-  // window.open, so inside the app we relabel the button to "copy" and
-  // have the click handler copy the URL to clipboard instead. The user
-  // pastes it into Chrome, downloads, then switches back to the app —
-  // the gate page is preserved because we never navigated away.
-  const btn = $('contribute-source-btn');
-  if (btn) btn.textContent = inAccordApp() ? 'Copy form link' : 'Proceed to form →';
-  const step1 = $('contribute-step-1');
-  if (step1) {
-    step1.innerHTML = inAccordApp()
-      ? 'Tap <strong>Copy form link</strong> below to copy the form\'s URL — then open Chrome and paste it into the address bar.'
-      : 'Tap <strong>Proceed to form</strong> below — it opens the form in a new tab.';
-  }
 }
 
-// In a normal browser tab: open the form in a new tab. In the Accord app's
-// WebView: copy the URL to the clipboard so the user can paste it into
-// Chrome themselves — calling window.open inside the WebView resets the app
-// to its home screen, which would lose the contribute flow's place.
-async function handleOpenForm() {
+// Open the form externally without losing the gate page. On desktop/web a
+// plain window.open new-tab works. Inside the Accord app's WebView,
+// window.open triggers the WebView's URL handler — which calls finish()
+// for non-Accord URLs and drops the user back at the app's home screen,
+// losing the contribute card. We route through AccordBridge.openInBrowser
+// so the native side launches Chrome via Intent.ACTION_VIEW and the
+// WebView stays put on /go/<id>.
+function handleOpenForm() {
   if (!fallbackUrl) return;
-  if (!inAccordApp()) {
-    window.open(fallbackUrl, '_blank', 'noopener,noreferrer');
-    return;
-  }
-  const btn = $('contribute-source-btn');
-  const original = btn?.dataset.original || btn?.textContent || 'Copy form link';
-  if (btn) btn.dataset.original = original;
-  let ok = false;
   try {
-    await navigator.clipboard.writeText(fallbackUrl);
-    ok = true;
-  } catch {
-    // Some Android WebView configs block the async Clipboard API; fall back
-    // to a hidden textarea + execCommand which is still permitted there.
-    try {
-      const ta = document.createElement('textarea');
-      ta.value = fallbackUrl;
-      ta.style.position = 'fixed';
-      ta.style.opacity = '0';
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      ta.remove();
-      ok = true;
-    } catch { ok = false; }
+    if (inAccordApp() && window.AccordBridge?.openInBrowser) {
+      window.AccordBridge.openInBrowser(fallbackUrl);
+      return;
+    }
+  } catch (e) {
+    console.warn('[accord/contribute] bridge openInBrowser failed, falling back', e);
   }
-  if (btn) {
-    btn.textContent = ok
-      ? '✓ Link copied — open Chrome, paste, then come back'
-      : "Couldn't copy — long-press to copy manually";
-    setTimeout(() => { btn.textContent = original; }, 4000);
-  }
+  window.open(fallbackUrl, '_blank', 'noopener,noreferrer');
 }
 
 function setContributeStatus(kind, msg) {
@@ -502,7 +469,23 @@ function resolveRule(rule, user) {
 // ─── Build prefill URL ────────────────────────────────────────────────────
 function buildPrefillUrl(formUrl, fields, user) {
   if (!formUrl) return formUrl;
+
+  // Normalize the form URL so we land on the canonical /forms/d/e/<id>/
+  // viewform path, regardless of any account-disambiguator the URL got
+  // stamped with. Google rewrites form URLs to /forms/u/<N>/d/e/<id>/
+  // when the request session has multiple Google accounts; that prefix
+  // means "load this form as the Nth signed-in account." If the visitor's
+  // Nth account doesn't have access to the form, Google returns its
+  // generic error page instead of the form — exactly the symptom we hit.
+  const cleanUrl = stripAuthuserSegment(formUrl);
+
   const params = new URLSearchParams();
+
+  // Hint Google with the email of the account the visitor actually picked
+  // in the Accord gate — overrides the session-order guesswork Google does
+  // when no account is specified, and overrides any leftover /u/<N>/ from
+  // older accord docs. Works for both Forms and Docs.
+  if (user?.email) params.set('authuser', user.email);
 
   const usedRuleIds = new Set();
   for (const f of ensureEmailAddressField(fields)) {
@@ -520,8 +503,21 @@ function buildPrefillUrl(formUrl, fields, user) {
   }
 
   const qs = params.toString();
-  if (!qs) return formUrl;
-  return `${formUrl}${formUrl.includes('?') ? '&' : '?'}${qs}`;
+  if (!qs) return cleanUrl;
+  return `${cleanUrl}${cleanUrl.includes('?') ? '&' : '?'}${qs}`;
+}
+
+// Strip `/u/<N>/` or `/u/<email>/` from a /forms/ URL's path. Defensive:
+// older accord docs may have a formUrl baked from a contributor's
+// download which captured their account session in the URL.
+function stripAuthuserSegment(url) {
+  try {
+    const u = new URL(url);
+    u.pathname = u.pathname.replace(/^\/forms\/u\/[^/]+\//, '/forms/');
+    return u.toString();
+  } catch {
+    return url;
+  }
 }
 
 // Guarantee a synthetic `emailAddress` field exists. Forms with the "Collect
