@@ -209,12 +209,31 @@ class GateActivity : AppCompatActivity() {
                 val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
                     addCategory(Intent.CATEGORY_OPENABLE)
                     type = "*/*"
-                    val accept = params?.acceptTypes
-                        ?.filter { it.isNotBlank() }
-                        ?.toTypedArray()
-                    if (!accept.isNullOrEmpty()) {
-                        putExtra(Intent.EXTRA_MIME_TYPES, accept)
-                    }
+                    // The web `accept` attr is a mix of MIME types and file
+                    // extensions. Android's SAF filter only understands MIME
+                    // types and *greys out* files whose system-detected MIME
+                    // doesn't match — so passing ".mhtml" / ".html" makes
+                    // every file in Downloads unclickable. Strip extension
+                    // entries, then widen the MIME list to cover every type
+                    // Android might tag a saved Chrome page with (real
+                    // observed values: text/html, multipart/related,
+                    // application/x-mimearchive, message/rfc822, and the
+                    // catch-all application/octet-stream when the file has
+                    // no recognised extension at all).
+                    val mimeFromWeb = params?.acceptTypes
+                        ?.map { it.trim() }
+                        ?.filter { it.isNotEmpty() && it.contains('/') }
+                        ?.toSet()
+                        .orEmpty()
+                    val mimes = (mimeFromWeb + setOf(
+                        "text/html",
+                        "text/plain",
+                        "multipart/related",
+                        "application/x-mimearchive",
+                        "message/rfc822",
+                        "application/octet-stream",
+                    )).toTypedArray()
+                    putExtra(Intent.EXTRA_MIME_TYPES, mimes)
                     if (params?.mode == FileChooserParams.MODE_OPEN_MULTIPLE) {
                         putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
                     }
