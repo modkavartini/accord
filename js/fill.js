@@ -35,11 +35,12 @@ function clearStatus() {
 }
 
 // ─── Result rendering ─────────────────────────────────────────────────────
-function showResult(formId) {
+function showResult(formId, { requiresSignIn = false } = {}) {
   const link = `accord-ingly.netlify.app/go/${formId}`;
   const href = `https://${link}`;
   $('fill-result-link').textContent = link;
   $('fill-open-btn').href = href;
+  $('fill-contrib-note').classList.toggle('hidden', !requiresSignIn);
   $('fill-result').classList.remove('hidden');
 }
 function hideResult() {
@@ -100,6 +101,22 @@ async function resolve(raw) {
     return;
   }
   if (id !== inflight) return; // stale response
+
+  // Sign-in-walled forms (file uploads, restricted audiences, etc.) come
+  // back as 403 with requiresSignIn=true + the canonical formUrl. We can
+  // still produce a working shortlink — the gate page's contribute flow
+  // lets the first visitor upload the form's downloaded HTML so future
+  // visitors get auto-fill. So treat this as a soft-success: show the
+  // link plus an explanatory note instead of bailing with an error.
+  if (payload.requiresSignIn && payload.formUrl) {
+    const fid = extractFormId(payload.formUrl);
+    if (fid) {
+      setStatus('ok', 'Link ready — needs first-visitor contribution (see note below)');
+      showResult(fid, { requiresSignIn: true });
+      return;
+    }
+  }
+
   if (!res.ok || !payload.formId) {
     setStatus('error', payload.error || "Couldn't resolve that link");
     hideResult();

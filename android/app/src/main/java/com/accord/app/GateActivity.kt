@@ -4,15 +4,22 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.provider.DocumentsContract
 import android.view.View
+import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
+import android.webkit.WebChromeClient.FileChooserParams
 import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.ProgressBar
+import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 
 /**
@@ -36,6 +43,12 @@ class GateActivity : AppCompatActivity() {
 
     /** Pending sign-in request from JS; tracked so we can deliver the result back. */
     private var pendingAuthRequestId: String? = null
+
+    /** Pending file-chooser callback from the WebView. The system file picker
+     *  hands the result back to {@link fileChooserLauncher}, which forwards it
+     *  to this callback so the `<input type="file">` change event fires. */
+    private var fileChooserCallback: ValueCallback<Array<Uri>>? = null
+    private lateinit var fileChooserLauncher: ActivityResultLauncher<Intent>
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -72,6 +85,32 @@ class GateActivity : AppCompatActivity() {
             },
             onSignOut = { auth.signOut() },
         )
+
+        // Register the file-picker launcher BEFORE configureWebView so the
+        // WebChromeClient can safely reference it. ActivityResultLauncher
+        // registration must happen before the activity enters STARTED state.
+        fileChooserLauncher = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { result ->
+            val cb = fileChooserCallback
+            fileChooserCallback = null
+            if (cb == null) return@registerForActivityResult
+            val uris: Array<Uri>? = if (result.resultCode == RESULT_OK) {
+                val data = result.data
+                when {
+                    // Multi-select (clip data) — concatenate URIs.
+                    data?.clipData != null -> {
+                        val cd = data.clipData!!
+                        Array(cd.itemCount) { i -> cd.getItemAt(i).uri }
+                    }
+                    data?.data != null -> arrayOf(data.data!!)
+                    else -> null
+                }
+            } else null
+            // WebView's contract: pass null on cancel/error so the input stays
+            // empty; otherwise the WebView blocks future file inputs.
+            cb.onReceiveValue(uris)
+        }
 
         configureWebView(webView)
         webView.addJavascriptInterface(bridge, "AccordBridge")
@@ -140,6 +179,65 @@ class GateActivity : AppCompatActivity() {
             override fun onProgressChanged(view: WebView?, newProgress: Int) {
                 progress.progress = newProgress
                 progress.visibility = if (newProgress in 1..99) View.VISIBLE else View.GONE
+            }
+
+            /**
+             * Bridge `<input type="file">` in the WebView to the Android system
+             * file picker. Without this override, file inputs are silently
+             * dead in a WebView — the contribute flow on /go/<id> uses one
+             * to upload a downloaded form-page HTML/MHTML file.
+             *
+             * Best-effort opens the picker in Downloads with the user's last
+             * sort preference (Android's picker doesn't accept a sort-order
+             * extra, so we can only hint at the starting directory).
+             */
+            override fun onShowFileChooser(
+                webView: WebView?,
+                filePathCallback: ValueCallback<Array<Uri>>,
+                params: FileChooserParams?
+            ): Boolean {
+                // Cancel any previous chooser so the WebView's state machine
+                // doesn't deadlock if the user re-taps the input quickly.
+                fileChooserCallback?.onReceiveValue(null)
+                fileChooserCallback = filePathCallback
+
+                val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                    type = "*/*"
+                    val accept = params?.acceptTypes
+                        ?.filter { it.isNotBlank() }
+                        ?.toTypedArray()
+                    if (!accept.isNullOrEmpty()) {
+                        putExtra(Intent.EXTRA_MIME_TYPES, accept)
+                    }
+                    if (params?.mode == FileChooserParams.MODE_OPEN_MULTIPLE) {
+                        putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+                    }
+                    // Hint at Downloads as the starting directory. The system
+                    // picker may or may not honor this depending on OEM/SAF
+                    // implementation, but it's the only knob the framework
+                    // exposes for "start here."
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        runCatching {
+                            val downloadsTree = Uri.parse(
+                                "content://com.android.externalstorage.documents/document/primary%3ADownload"
+                            )
+                            putExtra(DocumentsContract.EXTRA_INITIAL_URI, downloadsTree)
+                        }
+                    }
+                }
+
+                return try {
+                    fileChooserLauncher.launch(
+                        Intent.createChooser(intent, "Select downloaded form file")
+                    )
+                    true
+                } catch (e: Exception) {
+                    fileChooserCallback = null
+                    Toast.makeText(this@GateActivity,
+                        "Couldn't open the file picker", Toast.LENGTH_SHORT).show()
+                    false
+                }
             }
         }
 

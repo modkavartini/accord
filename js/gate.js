@@ -5,6 +5,7 @@ import {
   isFormIdShape, extractFormId,
   incrementUserFills, incrementFormVisits,
   createAccord, nanoid,
+  inAccordApp,
 } from './firebase.js';
 
 const $ = id => document.getElementById(id);
@@ -68,14 +69,59 @@ function renderContributeCard() {
   card.classList.remove('hidden');
   // Sign-in note visible only when not yet authed.
   $('contribute-signin-note').classList.toggle('hidden', !!authUser);
+  // The native app's WebView resets to the home screen when we call
+  // window.open, so inside the app we relabel the button to "copy" and
+  // have the click handler copy the URL to clipboard instead. The user
+  // pastes it into Chrome, downloads, then switches back to the app —
+  // the gate page is preserved because we never navigated away.
+  const btn = $('contribute-source-btn');
+  if (btn) btn.textContent = inAccordApp() ? 'Copy form link' : 'Proceed to form →';
+  const step1 = $('contribute-step-1');
+  if (step1) {
+    step1.innerHTML = inAccordApp()
+      ? 'Tap <strong>Copy form link</strong> below to copy the form\'s URL — then open Chrome and paste it into the address bar.'
+      : 'Tap <strong>Proceed to form</strong> below — it opens the form in a new tab.';
+  }
 }
 
-// Open the form in a new tab so the user can perform the pre-fill dance.
-// Plain `window.open` so the user keeps this gate tab around — closing it
-// would lose their place in the contribute flow.
-function handleOpenForm() {
+// In a normal browser tab: open the form in a new tab. In the Accord app's
+// WebView: copy the URL to the clipboard so the user can paste it into
+// Chrome themselves — calling window.open inside the WebView resets the app
+// to its home screen, which would lose the contribute flow's place.
+async function handleOpenForm() {
   if (!fallbackUrl) return;
-  window.open(fallbackUrl, '_blank', 'noopener,noreferrer');
+  if (!inAccordApp()) {
+    window.open(fallbackUrl, '_blank', 'noopener,noreferrer');
+    return;
+  }
+  const btn = $('contribute-source-btn');
+  const original = btn?.dataset.original || btn?.textContent || 'Copy form link';
+  if (btn) btn.dataset.original = original;
+  let ok = false;
+  try {
+    await navigator.clipboard.writeText(fallbackUrl);
+    ok = true;
+  } catch {
+    // Some Android WebView configs block the async Clipboard API; fall back
+    // to a hidden textarea + execCommand which is still permitted there.
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = fallbackUrl;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+      ok = true;
+    } catch { ok = false; }
+  }
+  if (btn) {
+    btn.textContent = ok
+      ? '✓ Link copied — open Chrome, paste, then come back'
+      : "Couldn't copy — long-press to copy manually";
+    setTimeout(() => { btn.textContent = original; }, 4000);
+  }
 }
 
 function setContributeStatus(kind, msg) {
@@ -117,48 +163,73 @@ function extractFbBlob(html) {
   return null;
 }
 
-// Chrome on Android saves pages as MHTML (multipart/related) by default,
-// which wraps the HTML in MIME parts with quoted-printable encoding —
-// so `[`, `]`, `<`, etc. show up as `=5B`, `=5D`, `=3C`. The bracket-
-// counting parser above can't see through that. We detect MHTML by its
-// signature headers and decode the QP body before parsing.
+// Chrome saves pages as MHTML (multipart/related) — each part has its own
+// Content-Transfer-Encoding header (quoted-printable / base64 / binary).
+// We extract the first text/html part and decode based on its declared
+// encoding. The earlier blanket QP-decode was wrong because mobile Chrome
+// uses Content-Transfer-Encoding: binary, and treating `=12` (e.g. inside
+// `data-tooltip-vertical-offset="12"`) as a hex escape corrupted the HTML.
 function looksLikeMhtml(text) {
   const head = text.slice(0, 2048);
-  return /^(From:|MIME-Version:|Content-Type:\s*multipart\/related)/im.test(head)
-      || /Content-Type:\s*multipart\/related/i.test(head);
+  return /^(From:|MIME-Version:|Content-Type:\s*multipart\/related)/im.test(head);
 }
-function decodeQuotedPrintable(text) {
-  return text
-    // Soft line breaks: an `=` at end of line means "join with next line".
+
+function decodeQuotedPrintable(s) {
+  return s
     .replace(/=\r?\n/g, '')
-    // Hex escapes: `=XX` → byte. We treat XX as the code point directly;
-    // for ASCII (which covers all FB_PUBLIC_LOAD_DATA_ structural chars)
-    // this is exact. Non-ASCII labels could be subtly off but they survive
-    // through JSON.parse string handling either way.
     .replace(/=([0-9A-Fa-f]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
 }
+
 function normalizeFormSource(text) {
   if (!looksLikeMhtml(text)) return text;
-  // Strip MIME headers + boundaries by stitching all parts together — the
-  // FB_PUBLIC_LOAD_DATA_ blob lives in the HTML part, but we don't bother
-  // picking it out; decoding QP across the whole file works fine because
-  // every non-HTML part is base64/binary and won't contain the marker.
-  return decodeQuotedPrintable(text);
+  // Pull the boundary out of the multipart/related Content-Type header.
+  const bm = text.match(/Content-Type:\s*multipart\/related[\s\S]*?boundary="([^"]+)"/i);
+  if (!bm) return text;
+  const boundary = bm[1];
+  const parts = text.split('--' + boundary);
+
+  for (const part of parts) {
+    if (!/Content-Type:\s*text\/html/i.test(part)) continue;
+    const encMatch = part.match(/Content-Transfer-Encoding:\s*([^\r\n]+)/i);
+    const enc = (encMatch?.[1] || '7bit').trim().toLowerCase();
+    // Body starts after the blank line that separates headers from content.
+    const splitAt = part.search(/\r?\n\r?\n/);
+    if (splitAt < 0) continue;
+    let body = part.slice(splitAt).replace(/^\r?\n\r?\n/, '');
+    if (enc === 'quoted-printable') body = decodeQuotedPrintable(body);
+    else if (enc === 'base64') {
+      try { body = atob(body.replace(/\s+/g, '')); } catch {}
+    }
+    // 7bit / 8bit / binary → pass through as-is.
+    return body;
+  }
+  return text;
 }
 
-function parseFormSource(text) {
-  const html = normalizeFormSource(text);
+// HTML entity decode — Google's data-params attributes are HTML-escaped.
+function htmlDecode(s) {
+  return s
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, n) => String.fromCharCode(parseInt(n, 16)))
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(parseInt(n, 10)))
+    .replace(/&amp;/g, '&'); // last so we don't double-decode &amp;quot;
+}
+
+// Path A (raw HTML response): FB_PUBLIC_LOAD_DATA_ is a JS variable assignment
+// in a <script>. Bracket-walk the array literal, then read fields out of
+// data[1][1] — same as the server parser.
+function parseFieldsFromFbBlob(html) {
   const blob = extractFbBlob(html);
-  if (!blob) return { error: "Couldn't find form data in that file — make sure you downloaded the actual form page (not a sign-in page or an error page)." };
-
+  if (!blob) return { fields: [], data: null };
   let data;
-  try { data = JSON.parse(blob); } catch { return { error: 'Form data was unreadable — please try downloading the form again.' }; }
-
-  const rawFields = data?.[1]?.[1];
-  if (!Array.isArray(rawFields)) return { error: 'No questions found in that file.' };
-
+  try { data = JSON.parse(blob); } catch { return { fields: [], data: null }; }
+  const raw = data?.[1]?.[1];
+  if (!Array.isArray(raw)) return { fields: [], data };
   const fields = [];
-  for (const f of rawFields) {
+  for (const f of raw) {
     const label = (f?.[1] || '').toString().trim();
     const subs  = f?.[4];
     if (!Array.isArray(subs)) continue;
@@ -168,30 +239,99 @@ function parseFormSource(text) {
       fields.push({ entryId: `entry.${entryNum}`, dummyValue: label });
     }
   }
+  return { fields, data };
+}
+
+// Path B (rendered DOM, e.g. mobile Chrome's MHT save): the script tag with
+// FB_PUBLIC_LOAD_DATA_ is gone, but every question's <div> carries a
+// `data-params="%.@.[QUESTION, "i1", "i2", "i3", false, "i4"]"` attribute
+// where QUESTION is the same per-question array shape as inside the FB blob:
+// [questionId, label, description, type, [[entryId, ...]], ...].
+function parseFieldsFromDataParams(html) {
+  const fields = [];
+  const seen = new Set();
+  const re = /data-params="([^"]+)"/g;
+  let m;
+  while ((m = re.exec(html)) !== null) {
+    // Google's `%.@.` sentinel marks a serialized array with the leading
+    // `[` trimmed (their own parser re-adds it). We re-add it here so
+    // JSON.parse can handle the value. After parsing, arr[0] is the
+    // question array and arr[1..] are DOM-element ID hints (i1, i2, …).
+    let payload = '[' + htmlDecode(m[1]).replace(/^%\.@\./, '');
+    let arr;
+    try { arr = JSON.parse(payload); } catch { continue; }
+    if (!Array.isArray(arr) || arr.length < 1) continue;
+    const q = arr[0];
+    if (!Array.isArray(q) || q.length < 5) continue;
+    const label = (q[1] || '').toString().trim();
+    const subs  = q[4];
+    if (!Array.isArray(subs)) continue;
+    for (const s of subs) {
+      const entryNum = s?.[0];
+      if (typeof entryNum !== 'number') continue;
+      const entryId = `entry.${entryNum}`;
+      if (seen.has(entryId)) continue;
+      seen.add(entryId);
+      fields.push({ entryId, dummyValue: label });
+    }
+  }
+  return fields;
+}
+
+function parseFormSource(text) {
+  const html = normalizeFormSource(text);
+  console.log('[accord/contribute] normalized HTML length', html.length, 'chars');
+
+  // Try the raw HTML path first; fall back to the rendered-DOM path.
+  const fb = parseFieldsFromFbBlob(html);
+  let fields = fb.fields;
+  let formTitle = '';
+  if (fb.data) {
+    if (typeof fb.data?.[3] === 'string') formTitle = fb.data[3].trim();
+    else if (typeof fb.data?.[1]?.[8] === 'string') formTitle = fb.data[1][8].trim();
+  }
+  if (!fields.length) {
+    fields = parseFieldsFromDataParams(html);
+    console.log('[accord/contribute] fell back to data-params parser, got', fields.length, 'fields');
+  }
+  if (!fields.length) {
+    return { error: "Couldn't find form data in that file — make sure you downloaded the actual form page (not a sign-in page or an error page)." };
+  }
+
   // Same email-collection safety net as the server parser.
   if (!fields.some(f => f.entryId === 'emailAddress')) {
     fields.unshift({ entryId: 'emailAddress', dummyValue: 'Email' });
   }
-  if (!fields.length) return { error: 'No prefillable fields detected in that file.' };
 
-  const idMatch = html.match(/forms\/d\/(?:e\/)?([A-Za-z0-9_-]{20,})/);
-  const formId = idMatch ? idMatch[1] : null;
+  // Prefer the published /forms/d/e/<id>/ ID over the editor /forms/d/<id>/
+  // ID — both can appear in the file (the editor URL shows up via the
+  // "Edit this form" button's data-redirect-url for form owners), but only
+  // the published ID matches the route's formId from parse-form.
+  let formId = null;
+  const publishedMatch = html.match(/forms\/d\/e\/([A-Za-z0-9_-]{20,})/);
+  if (publishedMatch) formId = publishedMatch[1];
+  else {
+    const editMatch = html.match(/forms\/d\/([A-Za-z0-9_-]{20,})/);
+    if (editMatch) formId = editMatch[1];
+  }
 
-  let formTitle = '';
-  if (typeof data?.[3] === 'string') formTitle = data[3].trim();
-  else if (typeof data?.[1]?.[8] === 'string') formTitle = data[1][8].trim();
+  // Title fallbacks: <title> tag, then MIME Subject: header (which mobile
+  // Chrome populates with the form title verbatim).
   if (!formTitle) {
     const tm = html.match(/<title[^>]*>([^<]*)<\/title>/i);
-    if (tm) formTitle = tm[1].replace(/\s*-\s*Google Forms\s*$/, '').trim();
+    if (tm) formTitle = htmlDecode(tm[1]).replace(/\s*-\s*Google Forms\s*$/, '').trim();
+  }
+  if (!formTitle) {
+    const sm = text.match(/^Subject:\s*(.+)$/im);
+    if (sm) formTitle = sm[1].trim();
   }
 
   return { formId, formTitle, fields };
 }
 
 async function handleContributeSubmit() {
-  const btn    = $('contribute-submit');
-  const fileEl = $('contribute-file');
-  const file   = fileEl?.files?.[0];
+  const btn  = $('contribute-submit');
+  const file = pickedFile;
   if (!file) { setContributeStatus('error', 'Choose the downloaded form file first.'); return; }
 
   setContributeStatus('loading', 'Reading the file…');
@@ -819,10 +959,49 @@ $('contribute-toggle')?.addEventListener('click', () => {
   $('contribute-card').classList.toggle('collapsed');
 });
 
+// Single source of truth for the picked file — fed by both the File System
+// Access API path (desktop Chrome/Edge) and the standard <input type="file">
+// change event (mobile, in-app WebView, older browsers).
+let pickedFile = null;
+function setPickedFile(file) {
+  pickedFile = file || null;
+  $('contribute-submit').disabled = !pickedFile;
+  $('contribute-file-text').textContent = pickedFile ? `📄 ${pickedFile.name}` : 'Choose form file';
+}
+
 $('contribute-file')?.addEventListener('change', (e) => {
-  const file = e.target.files?.[0];
-  $('contribute-submit').disabled = !file;
-  $('contribute-file-text').textContent = file ? `📄 ${file.name}` : 'Choose form file';
+  setPickedFile(e.target.files?.[0] || null);
+});
+
+// On desktop Chrome/Edge we can ask the OS file picker to start in the
+// Downloads folder via the File System Access API. Mobile browsers and the
+// Android WebView don't implement it, so the click falls through to the
+// hidden <input type="file"> — the native app's WebChromeClient.onShowFileChooser
+// then launches Android's system picker (with Downloads as the initial URI).
+$('contribute-file-btn')?.addEventListener('click', async () => {
+  if (window.showOpenFilePicker) {
+    try {
+      const [handle] = await window.showOpenFilePicker({
+        startIn: 'downloads',
+        types: [{
+          description: 'Downloaded form page',
+          accept: {
+            'text/html': ['.html', '.htm'],
+            'multipart/related': ['.mhtml', '.mht'],
+          },
+        }],
+        excludeAcceptAllOption: false,
+        multiple: false,
+      });
+      setPickedFile(await handle.getFile());
+      return;
+    } catch (err) {
+      if (err?.name === 'AbortError') return; // user cancelled the picker
+      console.warn('[accord/contribute] showOpenFilePicker failed, falling back', err);
+    }
+  }
+  // Fallback: trigger the native <input type="file">.
+  $('contribute-file').click();
 });
 
 $('contribute-source-btn')?.addEventListener('click', handleOpenForm);

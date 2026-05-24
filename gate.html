@@ -59,16 +59,16 @@
     </button>
     <div class="contribute-body" id="contribute-body">
       <ol class="contribute-steps">
-        <li>Tap <strong>Proceed to form</strong> below — it opens the form in a new tab.</li>
+        <li id="contribute-step-1">Tap <strong>Proceed to form</strong> below — it opens the form in a new tab.</li>
         <li>On the form page, tap your browser's <strong>⋮ menu</strong> (top right in Chrome).</li>
         <li>Tap the <strong>⬇ Download</strong> icon to save the page to your device.</li>
         <li>Come back here, tap <strong>Choose form file</strong> below, and pick the file you just downloaded (it'll be in your <em>Downloads</em> folder).</li>
         <li>Accord will read the form's questions from the file and add it as a contributed form on your dashboard.</li>
       </ol>
       <button type="button" class="btn btn-ghost w-full" id="contribute-source-btn" style="justify-content:center;">Proceed to form →</button>
-      <label class="btn btn-ghost w-full contribute-file-label" id="contribute-file-label" for="contribute-file" style="justify-content:center;cursor:pointer;">
+      <button type="button" class="btn btn-ghost w-full" id="contribute-file-btn" style="justify-content:center;">
         <span id="contribute-file-text">Choose form file</span>
-      </label>
+      </button>
       <input type="file" id="contribute-file" accept=".html,.htm,.mhtml,.mht,text/html,multipart/related" hidden />
       <p class="contribute-status hidden" id="contribute-status"></p>
       <button class="btn btn-primary w-full" id="contribute-submit" style="justify-content:center;padding:14px;" disabled>Teach Accord this form ✦</button>

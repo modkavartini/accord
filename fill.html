@@ -73,6 +73,19 @@
     }
     .fill-actions { display: flex; gap: 10px; flex-wrap: wrap; }
     .fill-actions .btn { flex: 1; min-width: 120px; justify-content: center; }
+    .fill-contrib-note {
+      margin-top: 16px;
+      padding: 12px 14px;
+      font-size: 12.5px;
+      line-height: 1.55;
+      color: rgba(107,227,122,0.78);
+      background: rgba(107,227,122,0.06);
+      border: 1px solid rgba(107,227,122,0.16);
+      border-radius: 10px;
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
     .fill-foot {
       margin-top: 28px;
       text-align: center;
@@ -124,6 +137,10 @@
         <button class="btn btn-ghost btn-sm" id="fill-copy-btn">Copy link</button>
         <a class="btn btn-primary btn-sm" id="fill-open-btn" href="#" target="_blank" rel="noopener">Open it now ✦</a>
       </div>
+      <p class="fill-contrib-note hidden" id="fill-contrib-note">
+        <span aria-hidden="true">ⓘ</span>
+        Heads up: this form requires Google sign-in (file upload questions or restricted access), so Accord couldn't fetch its fields automatically. The link still works — the first visitor with admin access can open it and follow the on-screen steps to upload the form's downloaded HTML once. After that, every future visitor gets auto-fill.
+      </p>
     </div>
   </div>
 
