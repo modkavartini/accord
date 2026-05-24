@@ -166,7 +166,12 @@ class GateActivity : AppCompatActivity() {
             domStorageEnabled         = true
             databaseEnabled           = true
             allowFileAccess           = false
-            allowContentAccess        = false
+            // Must be true so the WebView can read content:// URIs returned
+            // by the SAF file picker (the contribute flow uploads a
+            // downloaded form-page file from Downloads/ to JS). Restricted
+            // to picker-granted URIs by the OS — page JS can't enumerate
+            // other content providers.
+            allowContentAccess        = true
             mediaPlaybackRequiresUserGesture = true
             mixedContentMode          = WebSettings.MIXED_CONTENT_NEVER_ALLOW
             cacheMode                 = WebSettings.LOAD_DEFAULT
@@ -312,7 +317,10 @@ class GateActivity : AppCompatActivity() {
         const val EXTRA_URL     = "url"
         const val ACCORD_BASE = "https://accord-ingly.netlify.app"
         const val ACCORD_HOST = "accord-ingly.netlify.app"
-        private const val BOOTSTRAP_TIMEOUT_MS = 2500L
+        // Was 2500ms — far longer than typical silentSignIn (200-500ms) so
+        // most visits were paying ~2s of dead air before the WebView loaded.
+        // 900ms still covers slow networks while cutting typical TTFB in half.
+        private const val BOOTSTRAP_TIMEOUT_MS = 900L
 
         fun intentForForm(ctx: android.content.Context, formId: String): Intent =
             Intent(ctx, GateActivity::class.java).putExtra(EXTRA_FORM_ID, formId)

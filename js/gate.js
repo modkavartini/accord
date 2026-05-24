@@ -433,7 +433,7 @@ function hidePreloader() {
   const p = $('preloader');
   if (!p) return;
   p.classList.add('done');
-  setTimeout(() => p.remove(), 400);
+  setTimeout(() => p.remove(), 200);
 }
 
 // ─── Path parsing ─────────────────────────────────────────────────────────
@@ -832,14 +832,17 @@ async function doRedirect(user) {
     );
   } catch {}
 
-  setTimeout(() => { window.location.href = url; }, 1100);
+  // Was 1100ms — felt sluggish on every visit. 350ms is enough for the
+  // "Redirecting to form…" spinner to register without delaying the actual
+  // navigation. The counter-increment fire-and-forget still runs in parallel.
+  setTimeout(() => { window.location.href = url; }, 350);
 }
 
 function doSkipRedirect() {
   if (!resolved?.formUrl) return;
   show('redirecting');
   try { sessionStorage.setItem(RETURN_FLAG, window.location.pathname); } catch {}
-  setTimeout(() => { window.location.href = resolved.formUrl; }, 700);
+  setTimeout(() => { window.location.href = resolved.formUrl; }, 300);
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────

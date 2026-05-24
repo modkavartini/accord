@@ -196,11 +196,21 @@ function extractFbBlob(html) {
 }
 
 function json(statusCode, body) {
+  // Form schemas (fields, formId, title) and sign-in walls change rarely —
+  // cache the result at Netlify's edge so repeat visits to /go/<short> or
+  // /go/<formId> skip the 500-1500ms Google fetch entirely. Browsers stay
+  // on no-store so a user can paste the same link into /fill and see fresh
+  // status while the next visitor still gets the warm edge response.
+  // Skip caching for 5xx (transient errors) and 502 (rate limits) where
+  // we want the next request to retry.
+  const cacheable = statusCode === 200 || statusCode === 403 || statusCode === 422;
   return {
     statusCode,
     headers: {
       'Content-Type': 'application/json',
-      'Cache-Control': 'no-store',
+      'Cache-Control': cacheable
+        ? 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400'
+        : 'no-store',
       'Access-Control-Allow-Origin': '*',
     },
     body: JSON.stringify(body),

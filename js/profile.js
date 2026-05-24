@@ -137,22 +137,32 @@ function renderFields() {
     return;
   }
   list.innerHTML = profile.fields.map(f => {
-    const enabled = f.enabled !== false;
-    const valueDescr = describeValue(f);
+    const enabled  = f.enabled !== false;
+    const patterns = (f.patterns || []).filter(Boolean);
+    const patternChips = patterns.length
+      ? patterns.map(p => `<span class="pf-var">${escHtml(p)}</span>`).join('')
+      : `<span class="pf-var is-empty">(none)</span>`;
+    const valueChip = renderValueChip(f);
     return `
       <div class="profile-field-card${enabled ? '' : ' is-disabled'}" data-id="${escHtml(f.id)}">
-        <label class="toggle" title="${enabled ? 'Disable' : 'Enable'} this rule">
-          <input type="checkbox" data-toggle="${escHtml(f.id)}" ${enabled ? 'checked' : ''} />
-          <span class="toggle-slider"></span>
-        </label>
-        <div class="pf-info">
+        <div class="pf-top">
+          <label class="toggle" title="${enabled ? 'Disable' : 'Enable'} this rule">
+            <input type="checkbox" data-toggle="${escHtml(f.id)}" ${enabled ? 'checked' : ''} />
+            <span class="toggle-slider"></span>
+          </label>
           <p class="pf-label">${escHtml(f.label || '(unlabeled)')}</p>
-          <p class="pf-detail">
-            <code>${escHtml(f.match)}</code> ${(f.patterns || []).map(p => escHtml(`"${p}"`)).join(', ')}
-            <span class="pf-value-tag">→ ${valueDescr}</span>
-          </p>
+          <button class="btn btn-ghost btn-sm" data-edit="${escHtml(f.id)}">Edit</button>
         </div>
-        <button class="btn btn-ghost btn-sm" data-edit="${escHtml(f.id)}">Edit</button>
+        <div class="pf-rule">
+          <p class="pf-rule-line">
+            <span class="pf-keyword">${escHtml(f.match)}</span>
+          </p>
+          <div class="pf-vars">${patternChips}</div>
+          <p class="pf-rule-line">
+            <span class="pf-keyword">fill with</span>
+          </p>
+          <div class="pf-vars">${valueChip}</div>
+        </div>
       </div>
     `;
   }).join('');
@@ -172,6 +182,13 @@ function describeValue(f) {
   if (f.source === 'auth-name')  return '<em>your Google name</em>';
   if (f.source === 'auth-email') return '<em>your Google email</em>';
   return f.value ? `"${escHtml(f.value)}"` : '<em>(no value set)</em>';
+}
+
+function renderValueChip(f) {
+  if (f.source === 'auth-name')  return `<span class="pf-var pf-var-auth">your Google name</span>`;
+  if (f.source === 'auth-email') return `<span class="pf-var pf-var-auth">your Google email</span>`;
+  if (f.value)                   return `<span class="pf-var">${escHtml(f.value)}</span>`;
+  return `<span class="pf-var is-empty">(no value set)</span>`;
 }
 
 async function toggleField(id, enabled) {

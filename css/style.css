@@ -873,40 +873,83 @@ nav, main, footer, .modal-overlay { position: relative; z-index: 1; }
 
 .profile-field-card {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: 10px;
   background: rgba(255,255,255,0.03);
   border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 10px;
-  padding: 12px 14px;
-  margin-bottom: 8px;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  transition: opacity 0.15s, border-color 0.15s;
 }
+.profile-field-card.is-disabled { opacity: 0.55; }
 .profile-field-card.auth { opacity: 0.7; }
-.profile-field-card .pf-info { flex: 1; min-width: 0; }
-.pf-label { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
-.pf-detail {
-  font-size: 12px;
-  color: rgba(240,240,240,0.4);
-  line-height: 1.5;
+
+.pf-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.pf-top .pf-label {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.pf-detail code {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: rgba(240,240,240,0.55);
-  background: rgba(255,255,255,0.05);
-  padding: 1px 6px;
-  border-radius: 4px;
+
+.pf-rule {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-left: 52px; /* aligns with label, past the toggle */
 }
-.pf-value-tag {
+.pf-rule-line { margin: 0; line-height: 1; }
+.pf-keyword {
   font-family: var(--mono);
-  font-size: 11px;
-  color: rgba(240,240,240,0.55);
-  background: rgba(255,255,255,0.05);
-  padding: 2px 8px;
-  border-radius: 4px;
-  margin-left: 6px;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(240,240,240,0.35);
+}
+.pf-vars {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.pf-vars:last-child { margin-bottom: 0; }
+.pf-var {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: rgba(240,240,240,0.85);
+  background: transparent;
+  border: 1px dashed rgba(255,255,255,0.18);
+  border-radius: 6px;
+  padding: 3px 9px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pf-var.is-empty {
+  color: rgba(240,240,240,0.3);
+  font-style: italic;
+  border-style: dotted;
+}
+.pf-var-auth {
+  color: rgba(170,200,255,0.9);
+  border-color: rgba(170,200,255,0.3);
+  background: rgba(170,200,255,0.05);
+}
+
+@media (max-width: 520px) {
+  .pf-rule { padding-left: 0; }
+  .pf-top { flex-wrap: wrap; }
 }
 
 .presets-row {
@@ -1434,8 +1477,36 @@ nav, main, footer, .modal-overlay { position: relative; z-index: 1; }
 
 /* ── Responsive ── */
 @media (max-width: 600px) {
-  .navbar { padding: 16px 20px; }
+  .navbar { padding: 14px 16px; }
   .modal-box { padding: 28px 20px; }
-  .gate-card { padding: 36px 24px; }
+  .gate-card { padding: 32px 20px; border-radius: 18px; }
+  .gate-wrap { padding: 16px 12px; }
+  .gate-title { font-size: 26px; }
+  .gate-sub { font-size: 13px; margin-bottom: 28px; }
   main.dashboard-main { padding: 32px 16px; }
+
+  /* Bigger tap targets — Android Material recommends ≥48dp = ~48px */
+  .gate-card .btn { min-height: 48px; }
+  .gate-btn-group .btn { padding: 14px 18px; }
+
+  /* Contribute card on tight screens */
+  .contribute-card { border-radius: 14px; }
+  .contribute-header { padding: 14px 16px; }
+  .contribute-body { padding: 4px 16px 16px; }
+  .contribute-steps { padding-left: 18px; font-size: 12.5px; }
+  .contribute-prereq { font-size: 12px; padding: 9px 10px; }
+  .contribute-file-text { font-size: 14px; }
+
+  /* Not-found state */
+  .not-found { font-size: 24px; }
+  .not-found-wrap { padding: 32px 14px; }
+
+  /* Auto-fill preview rows breathe better on narrow screens */
+  .gate-preview-card { border-radius: 14px; }
+  .preview-row { gap: 10px; }
+}
+
+@media (max-width: 380px) {
+  .gate-card { padding: 26px 16px; }
+  .gate-title { font-size: 22px; }
 }

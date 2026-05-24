@@ -10,6 +10,15 @@
   <link rel="icon" type="image/svg+xml" href="/public/favicon.svg" />
   <link rel="apple-touch-icon" href="/public/favicon.svg" />
 
+  <!-- Warm DNS+TLS for the three hosts the gate hits on first load:
+       Firebase SDK CDN, Firestore (accord/profile read), and our own
+       parse-form function. Saves ~150-400ms on cold connections. -->
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin />
+  <link rel="dns-prefetch" href="https://accord-ed7f5.firebaseapp.com" />
+  <link rel="modulepreload" href="/js/firebase.js" />
+  <link rel="modulepreload" href="/js/gate.js" />
+
   <!-- Open Graph (best-effort: crawlers won't run JS to fetch the per-slug name) -->
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Accord" />
