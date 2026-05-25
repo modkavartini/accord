@@ -1,0 +1,174 @@
+/* Floating action button — pinned to the top-right corner of the viewport.
+   Sits outside the Google Forms card on desktop (centered form leaves empty
+   gutters on either side) so it never overlaps the form's own UI. */
+.accord-fab {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 2147483646;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 11px 20px 11px 17px;
+  background: #080808;
+  color: #f0f0f0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  font-family: 'Urbanist', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  cursor: pointer;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.22), 0 2px 6px rgba(0, 0, 0, 0.08);
+  transition: transform 180ms cubic-bezier(0.2, 0.7, 0.2, 1),
+              box-shadow 180ms ease,
+              background-color 150ms ease;
+  animation: accord-fab-in 380ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.accord-fab:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.28), 0 4px 10px rgba(0, 0, 0, 0.12);
+  background: #141414;
+}
+
+.accord-fab:active {
+  transform: translateY(0);
+}
+
+.accord-fab:disabled,
+.accord-fab.is-loading {
+  cursor: default;
+  opacity: 0.85;
+}
+
+.accord-fab-logo {
+  font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: -1px;
+  color: #f0f0f0;
+}
+
+.accord-fab-text {
+  white-space: nowrap;
+}
+
+@keyframes accord-fab-in {
+  0%   { opacity: 0; transform: translateY(-10px) scale(0.96); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* On narrow viewports (mobile-like widths) the form fills the screen, so we
+   shrink the button to icon-only to keep it out of the way. */
+@media (max-width: 720px) {
+  .accord-fab { padding: 10px 14px; }
+  .accord-fab-text { display: none; }
+}
+
+/* Toast — glassmorphic top-center pill matching Accord's design language.
+   Pointer-events disabled so it never gets in the way of clicking the form. */
+.accord-toast {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-10px);
+  background: rgba(8, 8, 8, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  color: #f0f0f0;
+  padding: 12px 20px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'Urbanist', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  z-index: 2147483646;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+  opacity: 0;
+  animation: accord-toast-in 260ms cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+}
+
+.accord-toast-logo {
+  font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 22px;
+  line-height: 1;
+  letter-spacing: -1px;
+  color: #f0f0f0;
+}
+
+.accord-toast-text {
+  white-space: nowrap;
+}
+
+.accord-toast-leave {
+  animation: accord-toast-out 240ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+@keyframes accord-toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+@keyframes accord-toast-out {
+  from { opacity: 1; transform: translateX(-50%) translateY(0); }
+  to   { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+}
+
+/* Highlighted question — soft yellow wash + warm accent rail. Using !important
+   because Google Forms applies its own background-color to listitems on
+   hover/focus and we want the highlight to win. */
+[role="listitem"].accord-filled {
+  position: relative;
+  background-color: rgba(255, 222, 89, 0.18) !important;
+  box-shadow: inset 3px 0 0 #f5b400;
+  border-radius: 8px;
+  transition: background-color 240ms ease;
+  animation: accord-fill-pulse 900ms ease-out 1;
+}
+
+@keyframes accord-fill-pulse {
+  0%   { background-color: rgba(255, 222, 89, 0.42) !important; }
+  100% { background-color: rgba(255, 222, 89, 0.18) !important; }
+}
+
+/* The "a." badge — small dark dot in the top-right of each filled question. */
+.accord-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 26px;
+  height: 26px;
+  background: #080808;
+  color: #f0f0f0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-weight: 500;
+  font-size: 15px;
+  line-height: 1;
+  letter-spacing: -1px;
+  padding-bottom: 1px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25), 0 0 0 2px rgba(255, 255, 255, 0.6);
+  pointer-events: none;
+  z-index: 5;
+  animation: accord-badge-in 360ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes accord-badge-in {
+  from { opacity: 0; transform: scale(0.4); }
+  to   { opacity: 1; transform: scale(1); }
+}
