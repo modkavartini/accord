@@ -1510,3 +1510,19 @@ nav, main, footer, .modal-overlay { position: relative; z-index: 1; }
   .gate-card { padding: 26px 16px; }
   .gate-title { font-size: 22px; }
 }
+
+/* On wide enough viewports, lay the gate card and the auto-fill preview side
+   by side so the visitor doesn't have to scroll to see what will be filled.
+   The breakpoint is sized for both 440px cards + gap + page padding. */
+@media (min-width: 920px) {
+  .gate-wrap {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 28px;
+    padding-top: 64px;
+    padding-bottom: 64px;
+  }
+  /* The preview's vertical margin only makes sense in the stacked layout;
+     in row layout it would push the preview down relative to the gate card. */
+  .gate-preview-card { margin-top: 0; }
+}

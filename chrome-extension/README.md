@@ -17,18 +17,20 @@ auto-filled question gets a yellow wash + an "a." badge in the corner.
 ## Files
 
 - `manifest.json` — MV3 manifest, content script on `docs.google.com/forms/*`
-- `background.js` — service worker; opens the gate tab on message
-- `content.js` — toast + gate launch + post-prefill highlighting
-- `styles.css` — toast + highlight + badge styles
+- `background.js` — service worker; opens the gate tab on button click
+- `content.js` — button injection + post-prefill highlighting
+- `styles.css` — button + highlight + badge styles
 - `icons/icon.png` — reuses `public/favicon.png` (256×256)
 
 ## How it decides what to do
 
-- URL is `/forms/d/e/<id>/viewform` **without** any `entry.X` param →
-  toast + launch the Accord gate in a new tab. (The original tab stays put.)
+- URL is `/forms/d/e/<id>/viewform` **without** any `entry.X` param,
+  and the visitor didn't just come from the Accord gate →
+  inject the "Auto-fill with Accord" button.
 - URL is `/forms/d/e/<id>/viewform` **with** `entry.X` params →
-  it's the post-gate prefilled form; just highlight the prefilled questions.
+  it's the post-gate prefilled form; show a confirmation toast and
+  highlight the prefilled questions.
+- URL has no entry params **but** `document.referrer` is `accord-ingly.netlify.app` →
+  the gate sent the visitor here even though no fields matched; don't
+  re-show the button (would invite a loop). Visitor can still fill manually.
 - URL is the form editor (`/forms/d/<id>/edit`) → ignored.
-
-A `sessionStorage` flag keyed by pathname prevents re-launching the gate on
-reload of the same form tab.
