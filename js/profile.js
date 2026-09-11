@@ -143,6 +143,7 @@ function renderFields() {
       ? patterns.map(p => `<span class="pf-var">${escHtml(p)}</span>`).join('')
       : `<span class="pf-var is-empty">(none)</span>`;
     const valueChip = renderValueChip(f);
+    const choiceLine = renderChoiceLine(f);
     return `
       <div class="profile-field-card${enabled ? '' : ' is-disabled'}" data-id="${escHtml(f.id)}">
         <div class="pf-top">
@@ -162,6 +163,7 @@ function renderFields() {
             <span class="pf-keyword">fill with</span>
           </p>
           <div class="pf-vars">${valueChip}</div>
+          ${choiceLine}
         </div>
       </div>
     `;
@@ -189,6 +191,25 @@ function renderValueChip(f) {
   if (f.source === 'auth-email') return `<span class="pf-var pf-var-auth">your Google email</span>`;
   if (f.value)                   return `<span class="pf-var">${escHtml(f.value)}</span>`;
   return `<span class="pf-var is-empty">(no value set)</span>`;
+}
+
+// Extra line on the card when the rule has explicit multiple-choice matching.
+function renderChoiceLine(f) {
+  const patterns = (f.choicePatterns || []).filter(Boolean);
+  const mode = f.choiceMatch || 'auto';
+  if (!patterns.length && mode === 'auto') return '';
+  const keyword = mode === 'auto' ? 'or option matching' : `or option that ${describeMatch(mode)}`;
+  const chips = patterns.length
+    ? patterns.map(p => `<span class="pf-var pf-var-choice">${escHtml(p)}</span>`).join('')
+    : `<span class="pf-var is-empty">(value above)</span>`;
+  return `
+          <p class="pf-rule-line">
+            <span class="pf-keyword">${escHtml(keyword)}</span>
+          </p>
+          <div class="pf-vars">${chips}</div>`;
+}
+function describeMatch(mode) {
+  return { contains: 'contains', startsWith: 'starts with', endsWith: 'ends with', equals: 'equals' }[mode] || mode;
 }
 
 async function toggleField(id, enabled) {
@@ -260,6 +281,9 @@ function openFieldEdit(field) {
   $('f-patterns').value = (field.patterns || []).join(', ');
   $('f-value').value    = field.value || '';
   $('f-source').value   = field.source || 'value';
+  $('f-choice-match').value    = field.choiceMatch || 'auto';
+  $('f-choice-patterns').value = (field.choicePatterns || []).join(', ');
+  applyChoiceUI();
   // Default ON for new fields and any legacy field that predates this flag.
   $('f-first-only').checked = field.firstOnly !== false;
   $('f-delete').style.display = field.id ? '' : 'none';
@@ -279,15 +303,29 @@ function applySourceUI() {
 }
 $('f-source').addEventListener('change', applySourceUI);
 
+function applyChoiceUI() {
+  const mode = $('f-choice-match').value;
+  $('f-choice-hint').textContent = mode === 'auto'
+    ? 'Patterns are optional here — they just give Accord more spellings to try (e.g. "CSE, Computer Science").'
+    : `Accord selects the first option that ${describeMatch(mode)} any of these patterns. Short-answer questions still get your value above.`;
+}
+$('f-choice-match').addEventListener('change', applyChoiceUI);
+
 async function saveField() {
   const label    = $('f-label').value.trim();
   const match    = $('f-match').value;
   const patterns = $('f-patterns').value.split(',').map(s => s.trim()).filter(Boolean);
   const source   = $('f-source').value;
   const value    = source === 'value' ? $('f-value').value : '';
+  const choiceMatch    = $('f-choice-match').value;
+  const choicePatterns = $('f-choice-patterns').value.split(',').map(s => s.trim()).filter(Boolean);
 
   if (!label)            { toast('Add a label');              return; }
   if (!patterns.length)  { toast('Add at least one pattern'); return; }
+  if (choiceMatch !== 'auto' && !choicePatterns.length) {
+    toast('Add option patterns, or switch back to "matches automatically"');
+    return;
+  }
 
   // Preserve existing enabled state when editing; new rules default to enabled
   const existing = editingFieldId ? profile.fields.find(x => x.id === editingFieldId) : null;
@@ -295,7 +333,7 @@ async function saveField() {
 
   const firstOnly = $('f-first-only').checked;
 
-  const f = { id: editingFieldId || nanoid(8), label, match, patterns, value, source, enabled, firstOnly };
+  const f = { id: editingFieldId || nanoid(8), label, match, patterns, value, source, enabled, firstOnly, choiceMatch, choicePatterns };
   if (editingFieldId) {
     profile.fields = profile.fields.map(x => x.id === editingFieldId ? f : x);
   } else {

@@ -121,17 +121,7 @@ exports.handler = async (event) => {
   const rawFields = data?.[1]?.[1];
   if (!Array.isArray(rawFields)) return json(422, { error: 'No fields found in form' });
 
-  const fields = [];
-  for (const f of rawFields) {
-    const label = (f?.[1] || '').toString().trim();
-    const subs  = f?.[4];
-    if (!Array.isArray(subs)) continue;
-    for (const s of subs) {
-      const entryNum = s?.[0];
-      if (typeof entryNum !== 'number') continue;
-      fields.push({ entryId: `entry.${entryNum}`, label });
-    }
-  }
+  const fields = questionsToFields(rawFields);
 
   // Google Forms' "Collect email addresses" toggle adds a special email field
   // that lives outside the normal questions array and uses `emailAddress` as
@@ -151,6 +141,54 @@ exports.handler = async (event) => {
     fields,
   });
 };
+
+// Google Forms item types (FB_PUBLIC_LOAD_DATA_[1][1][i][3]). Only the
+// choice-bearing ones matter to Accord: for those we ship the option texts so
+// the gate can pick the right option instead of a free-text value that Google
+// would silently drop.
+//   0 short answer · 1 paragraph · 2 multiple choice · 3 dropdown ·
+//   4 checkboxes · 5 linear scale · 7 grid · 8 section header · 9 date ·
+//   10 time · 13 file upload
+const CHOICE_TYPES = new Set([2, 3, 4, 5, 7]);
+
+// Flatten the per-question arrays into Accord fields. A question can carry
+// several entry IDs (grid rows) — each becomes its own field. Shape per
+// question: [qid, title, description, type, [[entryId, options, required,
+// rowLabels?, …], …], …]; options: [[text, …, isOther], …].
+function questionsToFields(rawFields) {
+  const fields = [];
+  for (const f of rawFields) {
+    const label = (f?.[1] || '').toString().trim();
+    const type  = typeof f?.[3] === 'number' ? f[3] : null;
+    const subs  = f?.[4];
+    if (!Array.isArray(subs)) continue;
+    for (const s of subs) {
+      const entryNum = s?.[0];
+      if (typeof entryNum !== 'number') continue;
+      const field = { entryId: `entry.${entryNum}`, label };
+      if (type !== null) field.type = type;
+      if (CHOICE_TYPES.has(type) && Array.isArray(s[1])) {
+        const options = [];
+        let hasOther = false;
+        for (const o of s[1]) {
+          if (!Array.isArray(o)) continue;
+          if (o[4]) { hasOther = true; continue; } // "Other…" placeholder row
+          const text = (o[0] ?? '').toString();
+          if (text !== '') options.push(text);
+        }
+        field.options = options;
+        if (hasOther) field.hasOther = true;
+      }
+      // Grid rows: s[3] is [rowLabel]; expose it so the gate can show
+      // "Question — Row" instead of the same title N times.
+      if (type === 7 && Array.isArray(s[3]) && typeof s[3][0] === 'string') {
+        field.row = s[3][0];
+      }
+      fields.push(field);
+    }
+  }
+  return fields;
+}
 
 function extractFormId(pathname) {
   const m = pathname.match(/\/forms\/d\/(?:e\/)?([A-Za-z0-9_-]+)/);

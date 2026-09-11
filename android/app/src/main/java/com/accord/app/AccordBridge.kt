@@ -39,6 +39,14 @@ class AccordBridge(
     @Volatile var pendingBootstrapEmail: String? = null
 
     /**
+     * True while native silent sign-in is still running. The page no longer
+     * waits for it before loading (see GateActivity): if JS asks for the
+     * token before it exists, it checks this flag and, if set, waits for
+     * {@link #pushBootstrapToken} to call `window.__accordBootstrap`.
+     */
+    @Volatile var bootstrapInFlight: Boolean = false
+
+    /**
      * Web calls this synchronously at firebase.js init. Returns the empty
      * string if no token is available (no native session, or silent sign-in
      * failed) so JS can fall through to its normal sign-in path.
@@ -49,6 +57,24 @@ class AccordBridge(
     /** Used by JS to short-circuit bootstrap if it's already signed in as this email. */
     @JavascriptInterface
     fun bootstrapEmail(): String = pendingBootstrapEmail.orEmpty()
+
+    /** True while the native silent sign-in that produces the bootstrap token is still running. */
+    @JavascriptInterface
+    fun bootstrapPending(): Boolean = bootstrapInFlight
+
+    /**
+     * Called (main thread) when silent sign-in completes. Stores the token
+     * for any later synchronous {@link #bootstrapIdToken} read and pushes
+     * it to a page that is already waiting. A null token (no cached account,
+     * silent flow failed) still fires the callback so JS stops waiting.
+     */
+    fun pushBootstrapToken(idToken: String?) {
+        pendingBootstrapToken = idToken
+        bootstrapInFlight = false
+        val safe = idToken.orEmpty().escapeForJsSingleQuoted()
+        val js = "try { window.__accordBootstrap && window.__accordBootstrap('$safe'); } catch(_) {}"
+        webView.post { webView.evaluateJavascript(js, null) }
+    }
 
     /**
      * Web calls this when it needs an ID token (sign-in or re-auth).

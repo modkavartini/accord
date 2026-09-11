@@ -10,14 +10,76 @@
   <link rel="icon" type="image/svg+xml" href="/public/favicon.svg" />
   <link rel="apple-touch-icon" href="/public/favicon.svg" />
 
-  <!-- Warm DNS+TLS for the three hosts the gate hits on first load:
-       Firebase SDK CDN, Firestore (accord/profile read), and our own
-       parse-form function. Saves ~150-400ms on cold connections. -->
+  <!-- Warm DNS+TLS for every host the gate hits on first load. -->
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
   <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="dns-prefetch" href="https://accord-ed7f5.firebaseapp.com" />
-  <link rel="modulepreload" href="/js/firebase.js" />
+  <!-- Preload the whole module graph up front. Without the gstatic entries
+       the browser only discovers the Firebase SDK after gate.js → firebase-core.js
+       have each round-tripped — two serial hops before the SDK even starts. -->
   <link rel="modulepreload" href="/js/gate.js" />
+  <link rel="modulepreload" href="/js/firebase-core.js" />
+  <link rel="modulepreload" href="/js/firestore-rest.js" />
+  <link rel="modulepreload" href="/js/match.js" />
+  <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js" crossorigin />
+  <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js" crossorigin />
+
+  <!-- Start the data requests NOW, before a single module has downloaded.
+       gate.js picks these promises up from window.__accordPrefetch (and
+       falls back to issuing them itself if this script didn't run). Keep
+       the URL/body shapes in sync with js/firestore-rest.js. -->
+  <script>
+  (function () {
+    var BASE = 'https://firestore.googleapis.com/v1/projects/accord-ed7f5/databases/(default)/documents';
+    var KEY  = 'key=AIzaSyCr7MSs5ZgmsTuiJpk-tTPMOzRawnLF0r0';
+    var P = window.__accordPrefetch = {};
+    function keep(p) { p.catch(function () {}); return p; }
+    function query(field, value) {
+      return keep(fetch(BASE + ':runQuery?' + KEY, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ structuredQuery: {
+          from: [{ collectionId: 'accords' }],
+          where: { fieldFilter: { field: { fieldPath: field }, op: 'EQUAL', value: { stringValue: value } } },
+          limit: 5,
+        } }),
+      }));
+    }
+    // The browser extension hands us the form's schema in the URL hash; the
+    // Firestore lookups are pointless then, but parse-form still runs so the
+    // gate learns whether the form is public (see gate.js resolveForm).
+    var hasHash = location.hash.indexOf('#schema=') === 0;
+
+    var path = location.pathname, formId = null, parseInput = null;
+    var go = path.match(/^\/go\/([^/]+)/);
+    if (go) {
+      var seg = decodeURIComponent(go[1]);
+      if (/^[A-Za-z0-9_-]{20,}$/.test(seg)) { formId = seg; parseInput = seg; }
+      else {
+        P.accordBySlug = query('slug', seg);
+        if (/^[A-Za-z0-9]{8,19}$/.test(seg)) parseInput = 'https://forms.gle/' + seg;
+      }
+    } else {
+      var u = path.match(/^\/(https?):\/+(.+)/);
+      if (u) {
+        parseInput = u[1] + '://' + u[2] + location.search;
+        var f = parseInput.match(/\/forms\/d\/(?:e\/)?([A-Za-z0-9_-]+)/);
+        if (f) formId = f[1];
+      }
+    }
+    if (formId && !hasHash) {
+      P.schema         = keep(fetch(BASE + '/form_schemas/' + encodeURIComponent(formId) + '?' + KEY));
+      P.accordByFormId = query('formId', formId);
+    }
+    if (hasHash && formId) parseInput = formId;
+    if (parseInput) {
+      P.parseFormInput = parseInput;
+      P.parseForm = keep(fetch('/.netlify/functions/parse-form?url=' + encodeURIComponent(parseInput)));
+    }
+  })();
+  </script>
 
   <!-- Open Graph (best-effort: crawlers won't run JS to fetch the per-slug name) -->
   <meta property="og:type" content="website" />
@@ -31,6 +93,7 @@
   <meta name="twitter:description" content="Sign in with Google to verify your identity and auto-fill the form." />
   <meta name="twitter:image" content="/public/og-image.svg" />
 
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Urbanist:wght@300;400;500;600;700&family=DM+Mono:wght@300;400;500&display=swap" />
   <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
@@ -48,7 +111,7 @@
   <div class="spinner"></div>
 </div>
 
-<!-- Not found state -->
+<!-- Not found / can't read state -->
 <div class="not-found-wrap hidden" id="state-not-found">
   <p class="not-found" id="not-found-text">Accord not found</p>
   <div class="not-found-actions">
@@ -56,33 +119,18 @@
     <a href="/" class="btn btn-ghost">← Go home</a>
   </div>
 
-  <!-- Contribute: shown when the form requires sign-in. Lets the visitor
-       paste the form's HTML source so future visitors can auto-fill it. -->
-  <div class="contribute-card glass hidden collapsed" id="contribute-card">
-    <button class="contribute-header" id="contribute-toggle" type="button">
-      <div class="contribute-text">
-        <p class="contribute-title">Help Accord auto-fill this form</p>
-        <p class="contribute-sub">Teach Accord this form's questions once — every future visitor gets auto-fill instantly.</p>
-      </div>
-      <span class="contribute-chevron" aria-hidden="true">▾</span>
-    </button>
-    <div class="contribute-body" id="contribute-body">
-      <ol class="contribute-steps">
-        <li id="contribute-step-1">Tap <strong>Proceed to form</strong> below — it opens the form in a new tab.</li>
-        <li>On the form page, tap your browser's <strong>⋮ menu</strong> (top right in Chrome).</li>
-        <li>Tap the <strong>⬇ Download</strong> icon to save the page to your device.</li>
-        <li>Come back here, tap <strong>Choose form file</strong> below, and pick the file you just downloaded (it'll be in your <em>Downloads</em> folder).</li>
-        <li>Accord will read the form's questions from the file and add it as a contributed form on your dashboard.</li>
-      </ol>
-      <button type="button" class="btn btn-ghost w-full" id="contribute-source-btn" style="justify-content:center;">Proceed to form →</button>
-      <button type="button" class="btn btn-ghost w-full" id="contribute-file-btn" style="justify-content:center;">
-        <span id="contribute-file-text">Choose form file</span>
-      </button>
-      <input type="file" id="contribute-file" accept=".html,.htm,.mhtml,.mht,text/html,multipart/related" hidden />
-      <p class="contribute-status hidden" id="contribute-status"></p>
-      <button class="btn btn-primary w-full" id="contribute-submit" style="justify-content:center;padding:14px;" disabled>Teach Accord this form ✦</button>
-      <p class="contribute-signin-note hidden" id="contribute-signin-note">You'll need to sign in with Google to contribute — your account just gets a "Contributed" entry on your dashboard.</p>
-    </div>
+  <!-- Shown when the form is behind Google sign-in. Accord's server can't
+       read those; the visitor's own signed-in browser can, which is what
+       the extension does. -->
+  <div class="signin-wall glass hidden" id="signin-wall">
+    <p class="signin-wall-title">This form needs Google sign-in</p>
+    <p class="signin-wall-text">
+      Forms with file uploads or restricted access only show their questions to a signed-in browser, so Accord's server can't read them.
+    </p>
+    <p class="signin-wall-text">
+      <strong>Open it in Chrome with the Accord extension</strong> and hit <em>Auto-fill with Accord</em> — the extension reads the form from your signed-in browser, and from then on this link auto-fills for everyone, on every device.
+    </p>
+    <a class="signin-wall-link" href="https://github.com/modkavartini/accord/tree/main/chrome-extension" target="_blank" rel="noopener noreferrer">Get the extension →</a>
   </div>
 </div>
 
@@ -103,11 +151,17 @@
     </p>
     <p class="gate-contributed-note hidden" id="gate-contributed-note">
       <span class="gate-contributed-icon" aria-hidden="true">ⓘ</span>
-      This form's fields were contributed by another Accord user — Accord couldn't fetch them automatically because the form requires Google sign-in.
+      This form requires Google sign-in, so its questions were read by another Accord user's browser extension rather than fetched by Accord directly.
     </p>
 
+    <!-- Auth state not known yet (persisted session being restored) -->
+    <div id="gate-auth-pending" class="gate-auth-pending">
+      <div class="spinner spinner-sm"></div>
+      <span>Checking your account…</span>
+    </div>
+
     <!-- Not signed in -->
-    <div id="gate-signin">
+    <div id="gate-signin" class="hidden">
       <button class="btn btn-primary w-full" id="gate-login-btn" style="padding:14px;justify-content:center;">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;">
           <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>

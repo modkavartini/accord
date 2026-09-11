@@ -161,7 +161,7 @@ function renderCard(accord, i) {
         <div>
           <p class="card-title">
             ${escHtml(accord.name)}
-            ${accord.contributed ? '<span class="contributed-tag" title="You contributed this form so others can auto-fill it">CONTRIBUTED</span>' : ''}
+            ${accord.contributed ? '<span class="contributed-tag" title="This form's questions were read from a signed-in browser (it requires Google sign-in)">SIGN-IN FORM</span>' : ''}
           </p>
           <p class="card-date">Saved ${date}</p>
         </div>
@@ -314,7 +314,7 @@ async function parseFormUrl() {
     return;
   }
 
-  editFields = payload.fields.map(f => ({ entryId: f.entryId, dummyValue: f.label }));
+  editFields = payload.fields.map(f => ({ entryId: f.entryId, dummyValue: f.label, ...(f.type != null && { type: f.type }), ...(f.options && { options: f.options }), ...(f.hasOther && { hasOther: true }), ...(f.row && { row: f.row }) }));
   if (payload.formUrl) {
     urlInput.value = payload.formUrl;
     lastParsedUrl.e = payload.formUrl;

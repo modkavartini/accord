@@ -1,0 +1,4 @@
+# Static assets that never change per deploy. HTML/JS/CSS keep Netlify's
+# default (max-age=0, must-revalidate) so a deploy is live immediately.
+/public/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800

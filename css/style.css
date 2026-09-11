@@ -1,4 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Urbanist:wght@300;400;500;600;700&family=DM+Mono:wght@300;400;500&display=swap');
+/* Fonts are linked from each page's <head> (see gate.html) rather than
+   @import-ed here: an @import only starts downloading after this stylesheet
+   has arrived, which put the fonts one full round trip behind first paint. */
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -946,6 +948,34 @@ nav, main, footer, .modal-overlay { position: relative; z-index: 1; }
   border-color: rgba(170,200,255,0.3);
   background: rgba(170,200,255,0.05);
 }
+.pf-var-choice {
+  color: rgba(255,210,80,0.9);
+  border-color: rgba(255,193,7,0.3);
+  background: rgba(255,193,7,0.05);
+}
+
+/* Field-edit modal: the multiple-choice sub-section. */
+.f-section {
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.f-section-title {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(240,240,240,0.5);
+}
+.f-section-hint {
+  font-size: 12.5px;
+  color: var(--text-dim);
+  line-height: 1.55;
+  margin-top: -4px;
+}
 
 @media (max-width: 520px) {
   .pf-rule { padding-left: 0; }
@@ -1140,108 +1170,54 @@ nav, main, footer, .modal-overlay { position: relative; z-index: 1; }
   box-sizing: border-box;
 }
 
-/* ── Contribute card (gate page, sign-in-walled forms) ── */
-.contribute-card {
+/* ── Sign-in wall notice (gate page, when the server can't read the form) ── */
+.signin-wall {
   width: 100%;
   max-width: 480px;
   border-radius: 16px;
-  padding: 0;
-  overflow: hidden;
+  padding: 20px 22px;
   margin-top: 8px;
-}
-.contribute-header {
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  padding: 18px 22px;
-  background: transparent;
-  border: 0;
-  color: var(--text);
   text-align: left;
-  cursor: pointer;
-  font-family: var(--body);
-  transition: background 0.15s;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
-.contribute-header:hover { background: rgba(255,255,255,0.02); }
-.contribute-text { min-width: 0; }
-.contribute-title {
+.signin-wall-title {
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--text);
 }
-.contribute-sub {
-  font-size: 12.5px;
-  color: var(--text-dim);
-  margin-top: 4px;
-  line-height: 1.5;
-}
-.contribute-chevron {
-  font-size: 14px;
-  color: var(--text-dim);
-  transition: transform 0.2s ease;
-  flex-shrink: 0;
-}
-.contribute-card.collapsed .contribute-chevron { transform: rotate(-90deg); }
-.contribute-body {
-  padding: 4px 22px 22px;
-  border-top: 1px solid var(--glass-border);
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-.contribute-card.collapsed .contribute-body { display: none; }
-.contribute-prereq {
-  font-size: 12.5px;
-  color: rgba(255,193,7,0.85);
-  background: rgba(255,193,7,0.06);
-  border: 1px solid rgba(255,193,7,0.16);
-  border-radius: 8px;
-  padding: 10px 12px;
-  margin: 14px 0 0;
-  line-height: 1.5;
-}
-.contribute-prereq strong { color: rgba(255,210,80,1); font-weight: 600; }
-.contribute-steps {
-  margin: 0;
-  padding-left: 22px;
+.signin-wall-text {
   font-size: 13px;
   color: var(--text-dim);
   line-height: 1.6;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
 }
-.contribute-steps strong { color: var(--text); font-weight: 600; }
-.contribute-textarea {
+.signin-wall-text strong { color: var(--text); font-weight: 600; }
+.signin-wall-text em { color: var(--text); font-style: italic; }
+.signin-wall-link {
+  font-size: 12px;
   font-family: var(--mono);
-  font-size: 11px;
-  line-height: 1.4;
-  resize: vertical;
-  min-height: 80px;
-  max-height: 200px;
-  word-break: break-all;
-}
-.contribute-status {
-  font-size: 12.5px;
+  letter-spacing: 0.04em;
   color: var(--text-dim);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.signin-wall-link:hover { color: var(--text); }
+
+/* Placeholder inside the gate card while the persisted session restores. */
+.gate-auth-pending {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 0;
+  justify-content: center;
+  gap: 10px;
+  min-height: 52px;
+  font-size: 13px;
+  color: var(--text-dim);
 }
-.contribute-status.is-error { color: #ff8888; }
-.contribute-status.is-ok    { color: #6be37a; }
-.contribute-signin-note {
-  font-size: 11.5px;
-  color: var(--text-muted);
-  text-align: center;
-  margin: 0;
-  line-height: 1.5;
-}
+.gate-auth-pending.hidden { display: none; }
+
 .spinner-sm {
   width: 14px; height: 14px;
   border: 1.5px solid rgba(255,255,255,0.15);
@@ -1387,6 +1363,20 @@ nav, main, footer, .modal-overlay { position: relative; z-index: 1; }
   text-decoration: line-through;
   text-decoration-color: rgba(255,255,255,0.3);
 }
+/* A rule matched a choice question but none of its options fit the value. */
+.preview-row.is-unmatched {
+  border-left-color: rgba(255,193,7,0.55);
+}
+.preview-row.is-unmatched .preview-value {
+  color: rgba(255,210,80,0.9);
+  font-family: var(--body);
+  font-size: 13px;
+}
+.preview-hint {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
 
 /* iOS-style switch for opting out of individual fields. */
 .preview-toggle {
@@ -1490,12 +1480,7 @@ nav, main, footer, .modal-overlay { position: relative; z-index: 1; }
   .gate-btn-group .btn { padding: 14px 18px; }
 
   /* Contribute card on tight screens */
-  .contribute-card { border-radius: 14px; }
-  .contribute-header { padding: 14px 16px; }
-  .contribute-body { padding: 4px 16px 16px; }
-  .contribute-steps { padding-left: 18px; font-size: 12.5px; }
-  .contribute-prereq { font-size: 12px; padding: 9px 10px; }
-  .contribute-file-text { font-size: 14px; }
+  .signin-wall { border-radius: 14px; padding: 16px; }
 
   /* Not-found state */
   .not-found { font-size: 24px; }
@@ -1524,5 +1509,18 @@ nav, main, footer, .modal-overlay { position: relative; z-index: 1; }
   }
   /* The preview's vertical margin only makes sense in the stacked layout;
      in row layout it would push the preview down relative to the gate card. */
-  .gate-preview-card { margin-top: 0; }
+  .gate-preview-card {
+    margin-top: 0;
+    /* The card's outer height is pinned to the gate card's height by JS
+       (syncPreviewHeight in gate.js). The inner column layout below lets the
+       header sit at the top and the list scroll inside the remaining space. */
+    display: flex;
+    flex-direction: column;
+    transition: height 180ms ease;
+  }
+  .gate-preview-list {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+  }
 }

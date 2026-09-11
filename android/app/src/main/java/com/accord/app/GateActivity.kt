@@ -115,25 +115,19 @@ class GateActivity : AppCompatActivity() {
         configureWebView(webView)
         webView.addJavascriptInterface(bridge, "AccordBridge")
 
-        // Prefetch a fresh Google ID token so the WebView's Firebase JS can
-        // sign in (via signInWithCredential) on page load — without this, the
-        // embedded site has no auth state and pages like /dashboard bounce to
-        // /, triggering a popup→redirect chain that Google blocks in WebViews.
-        // Don't block forever: if silentSignIn doesn't return within a budget,
-        // load anyway (signed-out site is still usable).
+        // Fetch a fresh Google ID token so the WebView's Firebase JS can sign
+        // in (via signInWithCredential) — without it the embedded site has no
+        // auth state and pages like /dashboard bounce to /. This used to gate
+        // loadUrl behind silentSignIn (or a 900ms timeout), which put the
+        // whole HTML/CSS/JS download serially behind Play Services on every
+        // visit. Now the page loads immediately and the token is pushed in
+        // when it lands; firebase-core.js waits on `bootstrapPending()` if it
+        // asks before then.
         bridge.pendingBootstrapEmail = auth.currentUser?.email
-        var loaded = false
-        val loadOnce = Runnable {
-            if (loaded) return@Runnable
-            loaded = true
-            webView.loadUrl(target)
-        }
-        val timeout = Runnable { loadOnce.run() }
-        webView.postDelayed(timeout, BOOTSTRAP_TIMEOUT_MS)
-        auth.silentSignIn { idToken ->
-            bridge.pendingBootstrapToken = idToken
-            webView.removeCallbacks(timeout)
-            loadOnce.run()
+        bridge.bootstrapInFlight = auth.currentUser != null
+        webView.loadUrl(target)
+        if (bridge.bootstrapInFlight) {
+            auth.silentSignIn { idToken -> bridge.pushBootstrapToken(idToken) }
         }
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
@@ -166,11 +160,10 @@ class GateActivity : AppCompatActivity() {
             domStorageEnabled         = true
             databaseEnabled           = true
             allowFileAccess           = false
-            // Must be true so the WebView can read content:// URIs returned
-            // by the SAF file picker (the contribute flow uploads a
-            // downloaded form-page file from Downloads/ to JS). Restricted
-            // to picker-granted URIs by the OS — page JS can't enumerate
-            // other content providers.
+            // Needed for the WebView to read content:// URIs returned by the
+            // SAF file picker (file inputs on Google Forms opened in-app).
+            // Restricted to picker-granted URIs by the OS — page JS can't
+            // enumerate other content providers.
             allowContentAccess        = true
             mediaPlaybackRequiresUserGesture = true
             mixedContentMode          = WebSettings.MIXED_CONTENT_NEVER_ALLOW
@@ -189,12 +182,12 @@ class GateActivity : AppCompatActivity() {
             /**
              * Bridge `<input type="file">` in the WebView to the Android system
              * file picker. Without this override, file inputs are silently
-             * dead in a WebView — the contribute flow on /go/<id> uses one
-             * to upload a downloaded form-page HTML/MHTML file.
+             * dead in a WebView (e.g. a form's file-upload question when the
+             * form is opened in-app).
              *
-             * Best-effort opens the picker in Downloads with the user's last
-             * sort preference (Android's picker doesn't accept a sort-order
-             * extra, so we can only hint at the starting directory).
+             * Best-effort opens the picker in Downloads (Android's picker
+             * doesn't accept a sort-order extra, so we can only hint at the
+             * starting directory).
              */
             override fun onShowFileChooser(
                 webView: WebView?,
@@ -336,10 +329,6 @@ class GateActivity : AppCompatActivity() {
         const val EXTRA_URL     = "url"
         const val ACCORD_BASE = "https://accord-ingly.netlify.app"
         const val ACCORD_HOST = "accord-ingly.netlify.app"
-        // Was 2500ms — far longer than typical silentSignIn (200-500ms) so
-        // most visits were paying ~2s of dead air before the WebView loaded.
-        // 900ms still covers slow networks while cutting typical TTFB in half.
-        private const val BOOTSTRAP_TIMEOUT_MS = 900L
 
         fun intentForForm(ctx: android.content.Context, formId: String): Intent =
             Intent(ctx, GateActivity::class.java).putExtra(EXTRA_FORM_ID, formId)

@@ -15,6 +15,10 @@
   <meta property="og:image" content="public/og-image.svg" />
   <meta name="twitter:card" content="summary_large_image" />
 
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Urbanist:wght@300;400;500;600;700&family=DM+Mono:wght@300;400;500&display=swap" />
   <link rel="stylesheet" href="css/style.css" />
   <style>
     .profile-main {
@@ -108,6 +112,7 @@
       <li>Pick a <strong>match type</strong>: <code>contains</code> is most forgiving, <code>equals exactly</code> is strictest.</li>
       <li>List one or more <strong>patterns</strong> (comma-separated). Any pattern matches the question name → the rule fires.</li>
       <li>The <strong>value</strong> is what Accord types into the field. For Name and Email, you can use your Google account info instead of a static value.</li>
+      <li>For <strong>multiple-choice</strong> questions Accord picks the closest option to your value on its own (it understands abbreviations like "CSE"). If a form's wording is unusual, add <strong>option patterns</strong> to the rule — e.g. <code>contains "Kidangoor"</code> — and Accord selects whichever option matches.</li>
       <li>Toggle a rule off to skip it during autofill — handy if you want to leave one field blank for a particular form session.</li>
     </ul>
   </div>
@@ -180,6 +185,33 @@
       <div class="field" id="f-value-row">
         <label class="label">Value to fill</label>
         <input class="input" id="f-value" placeholder="9876543210" autocomplete="off" />
+      </div>
+
+      <!-- Multiple-choice handling. Short-answer questions always get the
+           value above verbatim; choice questions (dropdown / multiple choice /
+           checkboxes) need Accord to pick one of the form's own options. -->
+      <div class="f-section">
+        <p class="f-section-title">When the question is multiple choice</p>
+        <p class="f-section-hint">
+          Accord picks the option that best matches your value automatically — e.g. <em>"Computer Science and Engineering"</em> will select <em>"CSE"</em>. If a form words its options differently, tell Accord what to look for.
+        </p>
+        <div class="hint-fields-row" style="display:flex;gap:12px;">
+          <div class="field" style="flex:0 0 180px;">
+            <label class="label">Pick the option that</label>
+            <select class="input" id="f-choice-match">
+              <option value="auto">matches automatically</option>
+              <option value="contains">contains</option>
+              <option value="startsWith">starts with</option>
+              <option value="endsWith">ends with</option>
+              <option value="equals">equals exactly</option>
+            </select>
+          </div>
+          <div class="field" style="flex:1;">
+            <label class="label">Option patterns (comma-separated)</label>
+            <input class="input mono" id="f-choice-patterns" placeholder="Kidangoor, CEK" autocomplete="off" />
+          </div>
+        </div>
+        <p class="field-hint" id="f-choice-hint"></p>
       </div>
 
       <label class="switch-row" for="f-first-only">

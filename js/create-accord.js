@@ -88,7 +88,9 @@ async function parseFormUrl() {
     return;
   }
 
-  createFields = payload.fields.map(f => ({ entryId: f.entryId, dummyValue: f.label }));
+  // Keep type/options alongside the label so the gate can pick the right
+  // option on multiple-choice questions for visitors of this accord.
+  createFields = payload.fields.map(f => ({ entryId: f.entryId, dummyValue: f.label, ...(f.type != null && { type: f.type }), ...(f.options && { options: f.options }), ...(f.hasOther && { hasOther: true }), ...(f.row && { row: f.row }) }));
 
   if (payload.formUrl) {
     urlInput.value = payload.formUrl;

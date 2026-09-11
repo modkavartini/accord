@@ -1,10 +1,18 @@
 # Accord for Google Forms — Chrome extension
 
 When you open a Google Form, a small **"a. Auto-fill with Accord"** pill
-appears in the top-right corner of the page. Clicking it opens the Accord
-gate (`accord-ingly.netlify.app/go/<formId>`) in a new tab. The gate then
+appears in the top-right corner of the page. Clicking it reads the form's
+questions straight from the page and opens the Accord gate
+(`accord-ingly.netlify.app/go/<formId>#schema=…`) in a new tab. The gate then
 redirects that tab back to the form with your details prefilled, and every
 auto-filled question gets a yellow wash + an "a." badge in the corner.
+
+Because the extension reads the form from **your** signed-in browser, it
+works for forms Accord's server can't fetch — ones with file-upload
+questions or restricted to an organisation. The first time anyone opens
+such a form through the extension, Accord caches its questions, so every
+later visitor (phone, no extension, whatever) gets auto-fill at
+`/go/<formId>` too.
 
 ## Load the unpacked extension
 
@@ -18,7 +26,7 @@ auto-filled question gets a yellow wash + an "a." badge in the corner.
 
 - `manifest.json` — MV3 manifest, content script on `docs.google.com/forms/*`
 - `background.js` — service worker; opens the gate tab on button click
-- `content.js` — button injection + post-prefill highlighting
+- `content.js` — button injection, form-schema extraction, post-prefill highlighting
 - `styles.css` — button + highlight + badge styles
 - `icons/icon.png` — reuses `public/favicon.png` (256×256)
 
@@ -26,7 +34,11 @@ auto-filled question gets a yellow wash + an "a." badge in the corner.
 
 - URL is `/forms/d/e/<id>/viewform` **without** any `entry.X` param,
   and the visitor didn't just come from the Accord gate →
-  inject the "Auto-fill with Accord" button.
+  inject the "Auto-fill with Accord" button. On click, the question list
+  (labels, entry IDs, types, choice options) is parsed from the page's
+  inline `FB_PUBLIC_LOAD_DATA_` script — falling back to the rendered
+  questions' `data-params` — and passed to the gate in the URL fragment.
+  Fragments never leave the browser; the gate decides what to cache.
 - URL is `/forms/d/e/<id>/viewform` **with** `entry.X` params →
   it's the post-gate prefilled form; show a confirmation toast and
   highlight the prefilled questions.

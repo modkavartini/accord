@@ -103,15 +103,14 @@ async function resolve(raw) {
   if (id !== inflight) return; // stale response
 
   // Sign-in-walled forms (file uploads, restricted audiences, etc.) come
-  // back as 403 with requiresSignIn=true + the canonical formUrl. We can
-  // still produce a working shortlink — the gate page's contribute flow
-  // lets the first visitor upload the form's downloaded HTML so future
-  // visitors get auto-fill. So treat this as a soft-success: show the
-  // link plus an explanatory note instead of bailing with an error.
+  // back as 403 with requiresSignIn=true + the canonical formUrl. The link
+  // still works: the first visitor who opens the form through the Accord
+  // browser extension teaches Accord its questions, and every visitor after
+  // that gets auto-fill. Treat it as a soft-success with a note.
   if (payload.requiresSignIn && payload.formUrl) {
     const fid = extractFormId(payload.formUrl);
     if (fid) {
-      setStatus('ok', 'Link ready — needs first-visitor contribution (see note below)');
+      setStatus('ok', 'Link ready — this form needs the browser extension once (see note below)');
       showResult(fid, { requiresSignIn: true });
       return;
     }

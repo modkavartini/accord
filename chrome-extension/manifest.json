@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Accord for Google Forms",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Auto-fill any Google Form with your verified Google identity through Accord.",
   "icons": {
     "16": "icons/icon.png",
@@ -24,7 +24,7 @@
       "matches": ["https://docs.google.com/forms/*"],
       "js": ["content.js"],
       "css": ["styles.css"],
-      "run_at": "document_idle"
+      "run_at": "document_start"
     }
   ]
 }

@@ -10,6 +10,7 @@ import android.provider.Settings
 import android.text.format.DateUtils
 import android.view.LayoutInflater
 import android.view.View
+import android.webkit.WebView
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.LinearLayout
@@ -98,6 +99,19 @@ class MainActivity : AppCompatActivity() {
         captureFormIntent(intent)
         renderState()
         consumePendingFormIntent()
+        warmWebView()
+    }
+
+    /**
+     * The first WebView in a process pays for Chromium's startup (~200-500ms
+     * on mid-range phones). Do that here, off the critical path, so the gate
+     * opens with a warm engine. The throwaway instance is destroyed right
+     * away — the provider stays initialised for the life of the process.
+     */
+    private fun warmWebView() {
+        window.decorView.post {
+            runCatching { WebView(this).destroy() }
+        }
     }
 
     override fun onNewIntent(intent: Intent) {
