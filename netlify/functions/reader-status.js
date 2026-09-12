@@ -14,8 +14,16 @@ const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
 // renders (or redirects within docs.google.com).
 const PROBE_URL = 'https://docs.google.com/forms/u/0/';
 
+// docs.google.com has its own session cookie (OSID) on top of the account-wide
+// SID/HSID set; a header copied from a google.com request lacks it and Google
+// bounces to ServiceLogin?...&osid=1. Report that rather than a bare "signed out".
+const hasOsid = /(^|;\s*)(__Secure-)?OSID=/.test(READER_COOKIE);
+
 exports.handler = async () => {
   const body = { configured: READER_COOKIE.length > 0, signedIn: null, checkedAt: new Date().toISOString() };
+  if (body.configured && !hasOsid) {
+    body.hint = 'Cookie has no OSID — copy the cookie header from a docs.google.com request (e.g. a viewform page), not google.com';
+  }
   if (body.configured) {
     try {
       const res = await fetch(PROBE_URL, {

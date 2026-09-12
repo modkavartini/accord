@@ -22,8 +22,8 @@ Forms with file-upload questions, verified email collection or "limit to 1 respo
 Setup (once, ~5 minutes):
 
 1. Create a throwaway Google account (e.g. `accord.reader@gmail.com`). Don't use a personal one — the session cookies end up in a Netlify env var.
-2. In a **separate Chrome profile** (not incognito, so the session isn't dropped), sign in as that account and open any Google Form, e.g. `https://docs.google.com/forms/u/0/`.
-3. DevTools → **Network** → click the document request → **Request Headers** → copy the entire value of the `cookie:` header.
+2. In a **new Chrome profile with only that account in it** (not incognito, so the session isn't dropped; not your normal profile — a profile's cookie header is one shared session for *every* account signed in to it), sign in and open any Google Form's `viewform` URL.
+3. DevTools → **Network** → reload → click the top request (host `docs.google.com`) → **Request Headers** → copy the entire value of the `cookie:` header. It must contain `OSID` / `__Secure-OSID` (the docs.google.com session); a header copied from a `google.com` request won't, and `reader-status` will say so.
 4. Store it as `ACCORD_GOOGLE_COOKIE` (scope: Functions) and redeploy:
    ```
    netlify env:set ACCORD_GOOGLE_COOKIE "<paste>"
