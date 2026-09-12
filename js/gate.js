@@ -477,9 +477,10 @@ function renderConfirm(user) {
   const firstName = (user.displayName || 'you').split(' ')[0];
   $('gate-proceed-btn').textContent = `Continue as ${firstName} →`;
 
+  // Nudge accounts that only have the seeded Name + Email towards setup.
   const badge = $('profile-new-badge');
-  const empty = profileLoaded && !(visitorProfile.fields || []).length;
-  badge.classList.toggle('hidden', !empty);
+  const fresh = profileLoaded && (visitorProfile.fields || []).length < 3 && !visitorProfile.onboardingStatus;
+  badge.classList.toggle('hidden', !fresh);
 }
 
 function setAuthPanel(which) {
@@ -766,8 +767,11 @@ $('gate-switch-btn')?.addEventListener('click', async () => {
 });
 
 $('gate-edit-profile-btn')?.addEventListener('click', () => {
-  const returnTo = window.location.pathname;
-  window.location.href = `/profile?returnTo=${encodeURIComponent(returnTo)}`;
+  const returnTo = encodeURIComponent(window.location.pathname);
+  // Only the seeded Name + Email and never offered the setup questions →
+  // the step-by-step flow beats an empty rules editor.
+  const fresh = profileLoaded && (visitorProfile.fields || []).length < 3 && !visitorProfile.onboardingStatus;
+  window.location.href = fresh ? `/onboarding?returnTo=${returnTo}` : `/profile?returnTo=${returnTo}`;
 });
 
 $('gate-preview-toggle')?.addEventListener('click', () => {

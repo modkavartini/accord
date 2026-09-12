@@ -1,7 +1,7 @@
 import {
   onAuth, signOutUser,
   getUserAccords, updateAccord, deleteAccord, slugExists,
-  ensureProfileSeeded,
+  ensureProfileSeeded, saveProfile,
   getUserFills,
   extractFormId,
   purgeAccount,
@@ -100,12 +100,24 @@ async function loadProfile() {
   } catch {
     profile = { fields: [] };
   }
-  // Show "finish setting up" cues if the user hasn't gone beyond the seeded
-  // Name + Email rules — i.e. they still need to add Phone, College, etc.
-  const needsMore = (profile.fields || []).length < 3;
-  $('profile-dot').classList.toggle('hidden', !needsMore);
-  $('setup-banner').classList.toggle('hidden', !needsMore);
+  // A profile that only has the seeded Name + Email and has never seen the
+  // setup questions belongs to a brand-new account: take them straight
+  // through onboarding. Everyone else who hasn't finished it gets a banner.
+  const onlySeeded = (profile.fields || []).length < 3;
+  if (onlySeeded && !profile.onboardingStatus) {
+    window.location.replace('/onboarding?returnTo=%2Fdashboard');
+    return new Promise(() => {});   // keep the preloader up until the page swaps
+  }
+  $('profile-dot').classList.toggle('hidden', !onlySeeded);
+  $('setup-banner').classList.toggle('hidden', profile.onboardingStatus === 'done');
 }
+
+$('setup-banner-dismiss').addEventListener('click', async () => {
+  $('setup-banner').classList.add('hidden');
+  profile.onboardingStatus = 'skipped';
+  profile.onboardingAt = new Date().toISOString();
+  try { await saveProfile(currentUser.uid, profile); } catch (e) { console.error(e); }
+});
 
 // ─── Lifetime auto-fill counter ───────────────────────────────────────────
 async function loadFills() {
@@ -161,7 +173,7 @@ function renderCard(accord, i) {
         <div>
           <p class="card-title">
             ${escHtml(accord.name)}
-            ${accord.contributed ? '<span class="contributed-tag" title="This form's questions were read from a signed-in browser (it requires Google sign-in)">SIGN-IN FORM</span>' : ''}
+            ${accord.contributed ? '<span class="contributed-tag" title="This form requires Google sign-in">SIGN-IN FORM</span>' : ''}
           </p>
           <p class="card-date">Saved ${date}</p>
         </div>

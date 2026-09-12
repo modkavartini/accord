@@ -64,7 +64,11 @@
     .setup-banner-text { flex: 1; min-width: 0; }
     .setup-banner-text p:first-child { font-size: 14px; font-weight: 600; color: rgba(255,210,160,0.95); margin-bottom: 2px; }
     .setup-banner-text p:last-child  { font-size: 12px; color: rgba(255,210,160,0.55); line-height: 1.5; }
-    .setup-banner .btn { flex-shrink: 0; }
+    .setup-banner-actions { display: flex; gap: 8px; flex-shrink: 0; }
+    @media (max-width: 480px) {
+      .setup-banner { flex-direction: column; align-items: stretch; }
+      .setup-banner-actions .btn { flex: 1; justify-content: center; }
+    }
 
     .fills-stat {
       display: flex;
@@ -167,13 +171,16 @@
     </div>
   </div>
 
-  <!-- Setup banner (shown only for new users) -->
+  <!-- Setup suggestion (hidden once the onboarding questions are done) -->
   <div class="setup-banner hidden" id="setup-banner">
     <div class="setup-banner-text">
-      <p>Finish setting up your Accord profile</p>
-      <p>Save your phone, college, roll number, etc. once — Accord auto-fills them into every Accord-enabled form you ever open.</p>
+      <p>Set up your profile in a minute</p>
+      <p>Answer a few quick questions — name, college, phone, roll number — and Accord fills them into every form you open from then on.</p>
     </div>
-    <a class="btn btn-primary btn-sm" href="/profile?returnTo=%2Fdashboard">Set up →</a>
+    <div class="setup-banner-actions">
+      <button class="btn btn-ghost btn-sm" id="setup-banner-dismiss" type="button">Not now</button>
+      <a class="btn btn-primary btn-sm" href="/onboarding?returnTo=%2Fdashboard">Start →</a>
+    </div>
   </div>
 
   <div class="accords-list" id="accords-list">

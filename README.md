@@ -15,6 +15,10 @@ Same form, both ways — open them side by side:
 
 [**Download the latest APK**](https://github.com/modkavartini/accord/releases/latest) — once installed, tapping any `forms.gle` link on your phone opens it through Accord automatically, so you don't have to paste links into `/fill` or rewrite URLs by hand. Just flip the "Open by default" toggle on the app's setup card after install.
 
+## Onboarding (`/onboarding`)
+
+Step-by-step profile setup: one question per screen (name, email, phone, college, branch, year, roll number, IEEE membership). Each answer becomes a rule in the user's profile — the same rules `/profile` edits by hand — so nothing else changes. Brand-new accounts (only the seeded Name + Email, never offered the questions) are sent straight there from the dashboard; everyone else sees a dismissible "Set up your profile in a minute" banner until they finish it. Completion/dismissal is stored as `onboardingStatus: 'done' | 'skipped'` on the profile doc, so it follows the user across devices and the Android app (which loads the same pages) needs no update.
+
 ## Reader account (forms that require Google sign-in)
 
 Forms with file-upload questions, verified email collection or "limit to 1 response" only show their questions to a signed-in Google account, so an anonymous server fetch gets a 401. Accord handles these with a **dedicated Google account** — the *reader* — whose browser session `parse-form` reuses whenever the anonymous fetch is walled. Any signed-in Google account can view such forms unless the owner restricted them to their organisation, so this covers nearly everything; the Chrome extension remains the fallback for org-restricted forms.
