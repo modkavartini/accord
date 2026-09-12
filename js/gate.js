@@ -14,11 +14,12 @@ import {
 const $ = id => document.getElementById(id);
 
 // ─── State ────────────────────────────────────────────────────────────────
-let resolved        = null;   // { source, formId, formUrl, name, fields, contributed }
+let resolved        = null;   // { source, formId, formUrl, name, fields, signInForm }
 let resolveError    = null;   // 'not-found' | 'unreadable'
 let resolveErrorMsg = null;   // human-readable error from parse-form (if any)
 let fallbackUrl     = null;   // best-known form URL to offer when fields can't be read
 let requiresSignIn  = false;  // true if parse-form told us the form is sign-in-walled
+let readerState     = null;   // why the reader account couldn't help: 'none' | 'expired' | 'denied'
 let authUser        = null;
 let authSettled     = false;  // first onAuth callback has fired
 let visitorProfile  = { fields: [] };
@@ -59,9 +60,22 @@ function renderNotFound(message) {
   } else {
     openBtn.classList.add('hidden');
   }
-  $('signin-wall').classList.toggle('hidden', !(requiresSignIn && fallbackUrl));
+  const wall = requiresSignIn && fallbackUrl;
+  $('signin-wall').classList.toggle('hidden', !wall);
+  if (wall) {
+    $('signin-wall-why').textContent = SIGNIN_WALL_WHY[readerState] || SIGNIN_WALL_WHY.none;
+  }
   show('not-found');
 }
+
+// First paragraph of the sign-in wall, keyed by parse-form's `reader` field.
+// Accord normally reads sign-in-walled forms through its own Google account
+// ("reader"); when that fails the visitor's extension is the fallback.
+const SIGNIN_WALL_WHY = {
+  none:    "Forms with file uploads or restricted access only show their questions to a signed-in Google account, and this Accord deployment doesn't have its reader account set up yet.",
+  expired: "Accord normally reads these through its own Google account, but that session has expired — the site owner needs to sign it in again.",
+  denied:  "This form is restricted to a specific organisation, so even Accord's own Google account can't view it. Only a member's browser can.",
+};
 
 // ─── Preloader ────────────────────────────────────────────────────────────
 function hidePreloader() {
@@ -146,8 +160,8 @@ function useSchemaDoc(doc, source) {
     formUrl: doc.formUrl || `https://docs.google.com/forms/d/e/${doc.formId}/viewform`,
     name:    resolved?.name || doc.title || 'this form',
     fields:  normalizeFields(doc.fields),
-    // Only worth a note when the extension was the ONLY way to read it.
-    contributed: doc.source === 'extension' && doc.requiresSignIn === true,
+    // Google will ask the visitor to sign in when the form opens — warn them.
+    signInForm: doc.requiresSignIn === true,
   };
   fallbackUrl = resolved.formUrl;
   resolveError = null; resolveErrorMsg = null; requiresSignIn = false;
@@ -193,7 +207,8 @@ async function resolveForm() {
     // future visitors where the schema came from.
     fetchParsed(hashSchema.formId).then(parsed => {
       if (parsed.ok) {
-        queueSchemaWrite(parsed.formId || hashSchema.formId, parsed.formUrl, parsed.title, parsed.fields, 'server');
+        queueSchemaWrite(parsed.formId || hashSchema.formId, parsed.formUrl, parsed.title, parsed.fields, 'server',
+                         parsed.requiresSignIn ? { requiresSignIn: true } : {});
       } else if (parsed.requiresSignIn) {
         queueSchemaWrite(hashSchema.formId, hashSchema.formUrl, hashSchema.title, hashSchema.fields, 'extension', { requiresSignIn: true });
       }
@@ -301,7 +316,7 @@ async function resolveByFormId(formId, parseInput, { skipAccordLookup = false, p
       formUrl: accord.formUrl || fallbackUrl,
       name: accord.name,
       fields: normalizeFields(accord.fields),
-      contributed: !!accord.contributed,
+      signInForm: !!accord.contributed,
     };
     resolveError = null;
     return;
@@ -337,6 +352,7 @@ async function fetchParsed(inputUrl) {
   // 422, etc.) so we can hand the visitor a working link to the form.
   if (payload?.formUrl) fallbackUrl = payload.formUrl;
   if (payload?.requiresSignIn) requiresSignIn = true;
+  if (payload?.reader) readerState = payload.reader;
   if (!res.ok || !Array.isArray(payload.fields)) {
     return { ok: false, error: payload?.error || null, formUrl: payload?.formUrl || null,
              requiresSignIn: !!payload?.requiresSignIn };
@@ -347,6 +363,9 @@ async function fetchParsed(inputUrl) {
     formUrl: payload.formUrl,
     title:   payload.formTitle || '',
     fields:  normalizeFields(payload.fields),
+    // Read through Accord's reader account: the form itself still needs
+    // the visitor to be signed in to Google.
+    requiresSignIn: !!payload.requiresSignIn,
   };
 }
 
@@ -357,12 +376,13 @@ function useParsed(parsed) {
     formUrl: parsed.formUrl || resolved?.formUrl,
     name:    resolved?.name || parsed.title || 'this form',
     fields:  parsed.fields,
-    contributed: false,
+    signInForm: !!parsed.requiresSignIn,
   };
   fallbackUrl = resolved.formUrl;
   resolveError = null; resolveErrorMsg = null; requiresSignIn = false;
   if (resolved.formId) {
-    queueSchemaWrite(resolved.formId, resolved.formUrl, parsed.title, parsed.fields, 'server');
+    queueSchemaWrite(resolved.formId, resolved.formUrl, parsed.title, parsed.fields, 'server',
+                     parsed.requiresSignIn ? { requiresSignIn: true } : {});
   }
 }
 
@@ -635,7 +655,7 @@ async function init() {
   $('gate-invited-label').textContent =
     resolved.source === 'slug' ? "YOU'VE BEEN INVITED TO" : "AUTO-FILLING";
   document.title = `${resolved.name || 'Accord'} — Accord`;
-  $('gate-contributed-note').classList.toggle('hidden', !resolved.contributed);
+  $('gate-signin-note').classList.toggle('hidden', !resolved.signInForm);
 
   show('gate');
   hidePreloader();

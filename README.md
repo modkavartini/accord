@@ -15,9 +15,29 @@ Same form, both ways — open them side by side:
 
 [**Download the latest APK**](https://github.com/modkavartini/accord/releases/latest) — once installed, tapping any `forms.gle` link on your phone opens it through Accord automatically, so you don't have to paste links into `/fill` or rewrite URLs by hand. Just flip the "Open by default" toggle on the app's setup card after install.
 
+## Reader account (forms that require Google sign-in)
+
+Forms with file-upload questions, verified email collection or "limit to 1 response" only show their questions to a signed-in Google account, so an anonymous server fetch gets a 401. Accord handles these with a **dedicated Google account** — the *reader* — whose browser session `parse-form` reuses whenever the anonymous fetch is walled. Any signed-in Google account can view such forms unless the owner restricted them to their organisation, so this covers nearly everything; the Chrome extension remains the fallback for org-restricted forms.
+
+Setup (once, ~5 minutes):
+
+1. Create a throwaway Google account (e.g. `accord.reader@gmail.com`). Don't use a personal one — the session cookies end up in a Netlify env var.
+2. In a **separate Chrome profile** (not incognito, so the session isn't dropped), sign in as that account and open any Google Form, e.g. `https://docs.google.com/forms/u/0/`.
+3. DevTools → **Network** → click the document request → **Request Headers** → copy the entire value of the `cookie:` header.
+4. Store it as `ACCORD_GOOGLE_COOKIE` (scope: Functions) and redeploy:
+   ```
+   netlify env:set ACCORD_GOOGLE_COOKIE "<paste>"
+   netlify deploy --prod --build
+   ```
+5. Check `https://accord-ingly.netlify.app/.netlify/functions/reader-status` → `{"configured":true,"signedIn":true}`.
+
+Google keeps that session valid for a long time (typically until the account signs out or changes its password), so **leave that Chrome profile signed in and never press "Sign out"**. If `reader-status` ever reports `signedIn:false`, or the gate says *"Accord's reader account session has expired"*, repeat steps 2–4. `parse-form` never logs or echoes the cookie; it is only ever sent to `docs.google.com`, and only after an anonymous fetch has already been refused.
+
+The 403 the gate receives carries `reader: "none" | "expired" | "denied"` so it can tell the visitor whether the fix is on your side (set up / refresh the reader) or theirs (org-restricted → use the extension).
+
 ## Chrome extension
 
-Load `chrome-extension/` unpacked (see its README). It adds an **Auto-fill with Accord** button to every Google Form. Forms that require Google sign-in (file uploads, restricted access) can't be read by Accord's server — the extension reads them from your signed-in browser instead and Accord remembers the form for everyone after that.
+Load `chrome-extension/` unpacked (see its README). It adds an **Auto-fill with Accord** button to every Google Form and reads the questions straight from your signed-in browser — the fallback for forms that even the reader account can't view (restricted to an organisation). Accord remembers the form for everyone after that.
 
 ## Profile rules
 

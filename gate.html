@@ -123,10 +123,8 @@
        read those; the visitor's own signed-in browser can, which is what
        the extension does. -->
   <div class="signin-wall glass hidden" id="signin-wall">
-    <p class="signin-wall-title">This form needs Google sign-in</p>
-    <p class="signin-wall-text">
-      Forms with file uploads or restricted access only show their questions to a signed-in browser, so Accord's server can't read them.
-    </p>
+    <p class="signin-wall-title">Accord couldn't read this form</p>
+    <p class="signin-wall-text" id="signin-wall-why"></p>
     <p class="signin-wall-text">
       <strong>Open it in Chrome with the Accord extension</strong> and hit <em>Auto-fill with Accord</em> — the extension reads the form from your signed-in browser, and from then on this link auto-fills for everyone, on every device.
     </p>
@@ -149,9 +147,9 @@
     <p class="gate-sub">
       Sign in with Google to verify your identity and auto-fill the form with your saved profile.
     </p>
-    <p class="gate-contributed-note hidden" id="gate-contributed-note">
+    <p class="gate-contributed-note hidden" id="gate-signin-note">
       <span class="gate-contributed-icon" aria-hidden="true">ⓘ</span>
-      This form requires Google sign-in, so its questions were read by another Accord user's browser extension rather than fetched by Accord directly.
+      This form requires Google sign-in — if you aren't signed in to Google in this browser, Google will ask before showing the form.
     </p>
 
     <!-- Auth state not known yet (persisted session being restored) -->

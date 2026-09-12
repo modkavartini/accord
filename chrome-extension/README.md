@@ -8,11 +8,13 @@ redirects that tab back to the form with your details prefilled, and every
 auto-filled question gets a yellow wash + an "a." badge in the corner.
 
 Because the extension reads the form from **your** signed-in browser, it
-works for forms Accord's server can't fetch — ones with file-upload
-questions or restricted to an organisation. The first time anyone opens
-such a form through the extension, Accord caches its questions, so every
-later visitor (phone, no extension, whatever) gets auto-fill at
-`/go/<formId>` too.
+works for forms Accord's server can't fetch. Accord's server normally reads
+sign-in-walled forms (file uploads, verified email) through its own reader
+Google account; the extension is the fallback for forms **restricted to an
+organisation**, which only a member's browser can view. The first time
+anyone opens such a form through the extension, Accord caches its
+questions, so every later visitor (phone, no extension, whatever) gets
+auto-fill at `/go/<formId>` too.
 
 ## Load the unpacked extension
 
