@@ -171,10 +171,7 @@ function renderCard(accord, i) {
     <div class="accord-card glass" style="animation-delay:${i * 0.07}s;">
       <div class="card-top">
         <div>
-          <p class="card-title">
-            ${escHtml(accord.name)}
-            ${accord.contributed ? '<span class="contributed-tag" title="This form requires Google sign-in">SIGN-IN FORM</span>' : ''}
-          </p>
+          <p class="card-title">${escHtml(accord.name)}</p>
           <p class="card-date">Saved ${date}</p>
         </div>
         <div class="card-actions">

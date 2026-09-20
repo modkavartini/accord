@@ -14,7 +14,7 @@ import {
 const $ = id => document.getElementById(id);
 
 // ─── State ────────────────────────────────────────────────────────────────
-let resolved        = null;   // { source, formId, formUrl, name, fields, signInForm }
+let resolved        = null;   // { source, formId, formUrl, name, fields }
 let resolveError    = null;   // 'not-found' | 'unreadable'
 let resolveErrorMsg = null;   // human-readable error from parse-form (if any)
 let fallbackUrl     = null;   // best-known form URL to offer when fields can't be read
@@ -162,8 +162,6 @@ function useSchemaDoc(doc, source) {
     formUrl: doc.formUrl || `https://docs.google.com/forms/d/e/${doc.formId}/viewform`,
     name:    resolved?.name || doc.title || 'this form',
     fields:  normalizeFields(doc.fields),
-    // Google will ask the visitor to sign in when the form opens — warn them.
-    signInForm: doc.requiresSignIn === true,
   };
   fallbackUrl = resolved.formUrl;
   resolveError = null; resolveErrorMsg = null; requiresSignIn = false;
@@ -233,7 +231,6 @@ async function resolveForm() {
         formUrl: accord.formUrl,
         name: accord.name,
         fields: Array.isArray(accord.fields) && accord.fields.length ? normalizeFields(accord.fields) : null,
-        contributed: !!accord.contributed,
       };
       fallbackUrl = resolved.formUrl || null;
       if (!resolved.fields) await resolveByFormId(formId, accord.formUrl || formId, { skipAccordLookup: true });
@@ -318,7 +315,6 @@ async function resolveByFormId(formId, parseInput, { skipAccordLookup = false, p
       formUrl: accord.formUrl || fallbackUrl,
       name: accord.name,
       fields: normalizeFields(accord.fields),
-      signInForm: !!accord.contributed,
     };
     resolveError = null;
     return;
@@ -378,7 +374,6 @@ function useParsed(parsed) {
     formUrl: parsed.formUrl || resolved?.formUrl,
     name:    resolved?.name || parsed.title || 'this form',
     fields:  parsed.fields,
-    signInForm: !!parsed.requiresSignIn,
   };
   fallbackUrl = resolved.formUrl;
   resolveError = null; resolveErrorMsg = null; requiresSignIn = false;
@@ -658,7 +653,6 @@ async function init() {
   $('gate-invited-label').textContent =
     resolved.source === 'slug' ? "YOU'VE BEEN INVITED TO" : "AUTO-FILLING";
   document.title = `${resolved.name || 'Accord'} — Accord`;
-  $('gate-signin-note').classList.toggle('hidden', !resolved.signInForm);
 
   show('gate');
   hidePreloader();
