@@ -134,6 +134,10 @@ function scoreOption(option, needle, weight) {
   // Whole containment — longer shared portion wins.
   if (o.includes(n)) return 80 + Math.round(12 * n.length / o.length);
   if (n.includes(o)) return 70 + Math.round(12 * o.length / n.length);
+  // Compact containment: "CEKGR" inside "…Kidangoor (CE-KGR)". Short needles
+  // only via this route when they're at least 4 chars, or "ce" would hit
+  // every "College of Engineering…".
+  if (nc.length >= 4 && oc.includes(nc)) return 66 + Math.round(12 * nc.length / oc.length);
 
   // Weighted token coverage with acronym expansion.
   const ot = sigTokens(option), nt = sigTokens(needle);
@@ -198,16 +202,32 @@ export function pickChoices(rule, value, field) {
     values = options.filter(o => patterns.some(p => matchStr(mode, o, p)));
     if (!multi) values = values.slice(0, 1);
   } else {
-    const needles = [value, ...patterns].filter(Boolean);
     const weight = tokenWeighter(options);
-    let best = null, bestScore = 0;
-    for (const o of options) {
-      for (const n of needles) {
-        const s = scoreOption(o, n, weight);
-        if (s > bestScore) { bestScore = s; best = o; }
+    // Best option for one needle. A needle whose top score is shared by
+    // several options is ambiguous ("CEK" spells both "College Of
+    // Engineering Kalloopara" and "…Karunagappally") and must not decide.
+    const bestFor = needle => {
+      let best = null, score = 0, tied = false;
+      for (const o of options) {
+        const s = scoreOption(o, needle, weight);
+        if (s > score)       { score = s; best = o; tied = false; }
+        else if (s === score && s > 0) tied = true;
       }
+      return { best, score, tied };
+    };
+    // The saved value goes first: a confident, unambiguous hit wins outright.
+    // Option words are extra spellings for when the value itself doesn't fit.
+    const primary = value ? bestFor(value) : null;
+    if (primary && primary.score >= 80 && !primary.tied) {
+      values = [primary.best];
+    } else {
+      let best = null, bestScore = 0;
+      for (const n of [value, ...patterns].filter(Boolean)) {
+        const r = bestFor(n);
+        if (!r.tied && r.score > bestScore) { bestScore = r.score; best = r.best; }
+      }
+      if (best && bestScore >= AUTO_THRESHOLD) values = [best];
     }
-    if (best && bestScore >= AUTO_THRESHOLD) values = [best];
   }
 
   if (values.length) return { values };
