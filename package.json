@@ -1,0 +1,9 @@
+{
+  "name": "accord",
+  "private": true,
+  "description": "Static site + Netlify functions. No build step; npm deps are only for the functions.",
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0",
+    "@netlify/functions": "^2.8.2"
+  }
+}

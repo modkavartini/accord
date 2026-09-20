@@ -48,7 +48,7 @@ Setup (once, ~5 minutes):
    ```
 5. Check `https://accord-ingly.netlify.app/.netlify/functions/reader-status` → `{"configured":true,"signedIn":true}`.
 
-Google keeps that session valid for a long time (typically until the account signs out or changes its password), so **leave that Chrome profile signed in and never press "Sign out"**. If `reader-status` ever reports `signedIn:false`, or the gate says *"Accord's reader account session has expired"*, repeat steps 2–4. `parse-form` never logs or echoes the cookie; it is only ever sent to `docs.google.com`, and only after an anonymous fetch has already been refused.
+Google rotates session cookies (`SIDCC`, `__Secure-*PSIDCC`, …) on nearly every response and stops honouring old ones after a few days, so the env var is only a *seed*: every reader fetch merges Google's `Set-Cookie` headers into a copy kept in Netlify Blobs (`lib/reader-session.js`), and the scheduled `reader-keepalive` function pings `docs.google.com` every 30 minutes so the session never idles out — the same thing an open browser tab does. Setting a new `ACCORD_GOOGLE_COOKIE` always supersedes the stored copy. **Leave that Chrome profile signed in and never press "Sign out"**. If `reader-status` reports `signedIn:false`, or the gate says *"Accord's reader account session has expired"*, repeat steps 2–4. `parse-form` never logs or echoes the cookie; it is only ever sent to `docs.google.com`, and only after an anonymous fetch has already been refused.
 
 The 403 the gate receives carries `reader: "none" | "expired" | "denied"` so it can tell the visitor whether the fix is on your side (set up / refresh the reader) or theirs (org-restricted → use the extension).
 

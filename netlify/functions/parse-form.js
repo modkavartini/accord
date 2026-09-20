@@ -36,9 +36,10 @@ const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
 // Pre-accept Google's cookie consent so the form page isn't replaced by a
 // consent.google.com interstitial on cookieless server-side fetches.
 const CONSENT_COOKIE = 'CONSENT=YES+; SOCS=CAI';
-// Full `Cookie:` header of a browser signed in as the Accord reader account.
+// The Accord reader account's browser session — seeded from
+// ACCORD_GOOGLE_COOKIE and kept fresh in a Netlify Blob (see lib/reader-session).
 // Never logged, never echoed — only ever sent to docs.google.com.
-const READER_COOKIE = (process.env.ACCORD_GOOGLE_COOKIE || '').trim();
+const { loadReaderSession, absorb } = require('./lib/reader-session');
 
 const SIGNIN_ERROR = 'This form requires Google sign-in';
 
@@ -74,11 +75,15 @@ exports.handler = async (event) => {
     // Pass 2: the same URL as the Accord reader account. Google's 401 lands
     // on the canonical form URL (shorteners already followed), so retry
     // that rather than re-walking the redirect chain.
-    if (!READER_COOKIE) {
+    const session = await loadReaderSession(event);
+    if (!session.cookie) {
       return signInResponse(page.formUrl, 'none');
     }
-    page = await fetchFormPage(page.formUrl || formUrl, `${CONSENT_COOKIE}; ${READER_COOKIE}`);
+    const sent = `${CONSENT_COOKIE}; ${session.cookie}`;
+    page = await fetchFormPage(page.formUrl || formUrl, sent);
     if (page.error) return json(502, { error: 'Could not reach the form' });
+    // Google rotates session cookies on every response — keep ours current.
+    if (page.res && page.kind !== 'signin') await absorb(page.res, sent);
     // Still bounced to accounts.google.com → the stored session is dead.
     if (page.kind === 'signin') return signInResponse(page.formUrl, 'expired');
   }
@@ -169,7 +174,7 @@ async function fetchFormPage(url, cookie) {
   const formUrl = isForm
     ? `${finalUrl.origin}${finalUrl.pathname.replace(/^\/forms\/u\/\d+\//, '/forms/')}`
     : null;
-  const base = { status: res.status, formUrl };
+  const base = { status: res.status, formUrl, res };
 
   // Google returns 401 with a "request storage access" interstitial for forms
   // that require sign-in; a dead session gets redirected to accounts.google.com.
