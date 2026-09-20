@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "518918384327-4s23uk35bgp6ubabf60isg632htfth3v.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.accord.app",
+            "certificate_hash": "354e6c6e04709b51ddc286534bbfad255c3c2edc"
+          }
+        },
+        {
           "client_id": "518918384327-mup0pn0hgpgbs5isp7db4dlj6h9ppq2i.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
