@@ -101,19 +101,16 @@
 
   <h1 class="profile-page-title">Your Profile</h1>
   <p class="profile-page-sub">
-    These rules tell Accord how to fill Google Forms for you. When a form asks for "Phone Number", Accord finds the matching rule below and types in the value you saved here — so you never have to type it again.
+    Save each detail once. When a form asks for it, Accord fills it in.
   </p>
 
   <!-- Tip box (user-facing only) -->
   <div class="tip-box">
     <p class="tip-box-title">How it works</p>
     <ul class="tip-list">
-      <li>Each rule represents one piece of personal info you reuse — phone, college, roll number, etc.</li>
-      <li>Pick a <strong>match type</strong>: <code>contains</code> is most forgiving, <code>equals exactly</code> is strictest.</li>
-      <li>List one or more <strong>patterns</strong> (comma-separated). Any pattern matches the question name → the rule fires.</li>
-      <li>The <strong>value</strong> is what Accord types into the field. For Name and Email, you can use your Google account info instead of a static value.</li>
-      <li>For <strong>multiple-choice</strong> questions Accord picks the closest option to your value on its own (it understands abbreviations like "CSE"). If a form's wording is unusual, add <strong>option patterns</strong> to the rule — e.g. <code>contains "Kidangoor"</code> — and Accord selects whichever option matches.</li>
-      <li>Toggle a rule off to skip it during autofill — handy if you want to leave one field blank for a particular form session.</li>
+      <li>One rule = one detail (phone, college, roll number…). Its <strong>words to look for</strong> are matched against the question.</li>
+      <li><strong>Multiple choice?</strong> Accord picks the closest option itself — it knows "CSE" means Computer Science. Add option words only if a form phrases things oddly.</li>
+      <li>Switch a rule off to leave that field blank for now.</li>
     </ul>
   </div>
 
@@ -121,7 +118,7 @@
   <div class="recommend-card hidden" id="recommend-card">
     <p class="recommend-eyebrow">★ RECOMMENDED FOR NEW ACCOUNTS</p>
     <h3 class="recommend-title">Start with the basics</h3>
-    <p class="recommend-text">Add these three rules and Accord will already auto-fill most forms you encounter. You can edit, toggle, or delete any of them later — or <a id="recommend-onboarding-link" href="/onboarding?returnTo=%2Fprofile" style="color:var(--text);text-decoration:underline;text-underline-offset:3px;">answer a few quick questions</a> and let Accord set them up for you.</p>
+    <p class="recommend-text">Add these and most forms fill themselves — or <a id="recommend-onboarding-link" href="/onboarding?returnTo=%2Fprofile" style="color:var(--text);text-decoration:underline;text-underline-offset:3px;">answer a few quick questions</a> and Accord sets them up for you.</p>
     <div class="recommend-actions" id="recommend-actions"></div>
   </div>
 
@@ -133,7 +130,7 @@
 
   <div class="profile-section">
     <p class="profile-section-title">Popular presets</p>
-    <p class="profile-section-hint">One-click templates — fill in the value next.</p>
+    <p class="profile-section-hint">Tap one, add your value.</p>
     <div id="presets-list" class="presets-row"></div>
   </div>
 
@@ -159,16 +156,16 @@
       <div class="field">
         <label class="label">Source</label>
         <select class="input" id="f-source">
-          <option value="value">Static value (I fill it in below)</option>
+          <option value="value">A value I type below</option>
           <option value="auth-name">My Google account name</option>
           <option value="auth-email">My Google account email</option>
         </select>
-        <p class="field-hint" id="f-source-hint">Accord types your saved value into the field.</p>
+        <p class="field-hint" id="f-source-hint">Accord types this value.</p>
       </div>
 
-      <div class="hint-fields-row" style="display:flex;gap:12px;">
-        <div class="field" style="flex:0 0 180px;">
-          <label class="label">Match type</label>
+      <div class="hint-fields-row">
+        <div class="field field-fixed">
+          <label class="label">Question</label>
           <select class="input" id="f-match">
             <option value="contains">contains</option>
             <option value="equals">equals exactly</option>
@@ -176,14 +173,14 @@
             <option value="endsWith">ends with</option>
           </select>
         </div>
-        <div class="field" style="flex:1;">
-          <label class="label">Patterns (comma-separated)</label>
-          <input class="input mono" id="f-patterns" placeholder="Phone, Number, Contact" autocomplete="off" />
+        <div class="field field-grow">
+          <label class="label">Words to look for <span class="label-hint">comma-separated</span></label>
+          <input class="input mono" id="f-patterns" placeholder="Phone, Mobile, Contact" autocomplete="off" />
         </div>
       </div>
 
       <div class="field" id="f-value-row">
-        <label class="label">Value to fill</label>
+        <label class="label">Value</label>
         <input class="input" id="f-value" placeholder="9876543210" autocomplete="off" />
       </div>
 
@@ -191,23 +188,23 @@
            value above verbatim; choice questions (dropdown / multiple choice /
            checkboxes) need Accord to pick one of the form's own options. -->
       <div class="f-section">
-        <p class="f-section-title">When the question is multiple choice</p>
+        <p class="f-section-title">Multiple-choice questions</p>
         <p class="f-section-hint">
-          Accord picks the option that best matches your value automatically — e.g. <em>"Computer Science and Engineering"</em> will select <em>"CSE"</em>. If a form words its options differently, tell Accord what to look for.
+          Accord picks the option closest to your value — <em>"Computer Science"</em> finds <em>"CSE"</em>. Add option words only if a form phrases it differently.
         </p>
-        <div class="hint-fields-row" style="display:flex;gap:12px;">
-          <div class="field" style="flex:0 0 180px;">
-            <label class="label">Pick the option that</label>
+        <div class="hint-fields-row">
+          <div class="field field-fixed">
+            <label class="label">Option</label>
             <select class="input" id="f-choice-match">
-              <option value="auto">matches automatically</option>
+              <option value="auto">closest to my value</option>
               <option value="contains">contains</option>
               <option value="startsWith">starts with</option>
               <option value="endsWith">ends with</option>
               <option value="equals">equals exactly</option>
             </select>
           </div>
-          <div class="field" style="flex:1;">
-            <label class="label">Option patterns (comma-separated)</label>
+          <div class="field field-grow">
+            <label class="label">Option words <span class="label-hint">comma-separated</span></label>
             <input class="input mono" id="f-choice-patterns" placeholder="Kidangoor, CEK" autocomplete="off" />
           </div>
         </div>
@@ -216,8 +213,8 @@
 
       <label class="switch-row" for="f-first-only">
         <span class="switch-row-text">
-          <span class="switch-row-title">Only auto-fill the first instance</span>
-          <span class="switch-row-hint">If a form repeats this question (e.g. "Email" and "Confirm Email"), only the first one gets filled.</span>
+          <span class="switch-row-title">Fill only the first match</span>
+          <span class="switch-row-hint">Skips repeats like "Confirm Email".</span>
         </span>
         <span class="preview-toggle">
           <input type="checkbox" id="f-first-only" />
@@ -244,10 +241,10 @@
       <button class="modal-close" id="delete-account-close">×</button>
     </div>
     <p style="font-size:14px;line-height:1.7;color:rgba(240,240,240,0.65);margin-bottom:6px;">
-      This permanently deletes your profile rules, every Accord you've created, and your sign-in. <strong style="color:rgba(240,240,240,0.9);">This cannot be undone.</strong>
+      Deletes your profile, your saved Accords and your sign-in. <strong style="color:rgba(240,240,240,0.9);">This can't be undone.</strong>
     </p>
     <p style="font-size:12px;line-height:1.6;color:rgba(240,240,240,0.4);margin-top:12px;">
-      Google may re-prompt you to sign in to confirm — that's a security check, not a second account.
+      Google may ask you to sign in again to confirm.
     </p>
     <div class="modal-actions">
       <button class="btn btn-ghost" id="delete-account-cancel">Keep my account</button>

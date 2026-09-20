@@ -297,17 +297,17 @@ function applySourceUI() {
   const isAuth = src === 'auth-name' || src === 'auth-email';
   $('f-value-row').classList.toggle('hidden', isAuth);
   $('f-source-hint').textContent =
-    src === 'auth-name'  ? 'Accord uses your Google account name from this device.' :
-    src === 'auth-email' ? 'Accord uses your Google account email from this device.' :
-                            'Accord types your saved value into the field.';
+    src === 'auth-name'  ? 'Uses your Google account name.' :
+    src === 'auth-email' ? 'Uses your Google account email.' :
+                            'Accord types this value.';
 }
 $('f-source').addEventListener('change', applySourceUI);
 
 function applyChoiceUI() {
   const mode = $('f-choice-match').value;
   $('f-choice-hint').textContent = mode === 'auto'
-    ? 'Patterns are optional here — they just give Accord more spellings to try (e.g. "CSE, Computer Science").'
-    : `Accord selects the first option that ${describeMatch(mode)} any of these patterns. Short-answer questions still get your value above.`;
+    ? 'Optional — extra spellings to try, e.g. "CSE, Computer Science".'
+    : `Picks the first option that ${describeMatch(mode)} one of these. Text answers still get your value.`;
 }
 $('f-choice-match').addEventListener('change', applyChoiceUI);
 
@@ -320,10 +320,10 @@ async function saveField() {
   const choiceMatch    = $('f-choice-match').value;
   const choicePatterns = $('f-choice-patterns').value.split(',').map(s => s.trim()).filter(Boolean);
 
-  if (!label)            { toast('Add a label');              return; }
-  if (!patterns.length)  { toast('Add at least one pattern'); return; }
+  if (!label)            { toast('Add a label');                       return; }
+  if (!patterns.length)  { toast('Add at least one word to look for'); return; }
   if (choiceMatch !== 'auto' && !choicePatterns.length) {
-    toast('Add option patterns, or switch back to "matches automatically"');
+    toast('Add option words, or switch back to "closest to my value"');
     return;
   }
 

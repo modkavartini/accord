@@ -1524,3 +1524,35 @@ nav, main, footer, .modal-overlay { position: relative; z-index: 1; }
     overflow-y: auto;
   }
 }
+
+/* ── Field-edit rows: fixed select + growing input on wide screens, stacked
+   on phones so neither the labels nor the select text get clipped. ── */
+.hint-fields-row { display: flex; gap: 12px; }
+.hint-fields-row .field-fixed { flex: 0 0 180px; min-width: 0; }
+.hint-fields-row .field-grow  { flex: 1 1 auto; min-width: 0; }
+.field select.input { text-overflow: ellipsis; }
+
+@media (max-width: 600px) {
+  .hint-fields-row { flex-direction: column; }
+  .hint-fields-row .field-fixed { flex-basis: auto; }
+
+  /* Modals become bottom sheets: full width, no dead gutter, scroll inside */
+  .modal-overlay { padding: 0; align-items: flex-end; }
+  .modal-box {
+    max-width: none;
+    max-height: 92vh;
+    max-height: 92dvh;
+    border-radius: 18px 18px 0 0;
+    padding: 24px 18px calc(24px + env(safe-area-inset-bottom));
+    animation: slideUp 0.25s ease;
+  }
+  .modal-header { margin-bottom: 20px; }
+  .modal-actions, .modal-actions-split { flex-wrap: wrap; }
+  .modal-actions .btn, .modal-actions-split .btn { flex: 1 1 auto; justify-content: center; }
+  .modal-actions > div { display: flex; flex: 1 1 100%; gap: 10px; }
+  .modal-actions > div .btn { flex: 1; }
+  .modal-actions .btn-danger { flex-basis: 100%; order: 2; }
+  .modal-actions > div { order: 1; }
+  .switch-row { padding: 12px 14px; }
+}
+@keyframes slideUp { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }

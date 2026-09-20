@@ -72,9 +72,9 @@ function renderNotFound(message) {
 // Accord normally reads sign-in-walled forms through its own Google account
 // ("reader"); when that fails the visitor's extension is the fallback.
 const SIGNIN_WALL_WHY = {
-  none:    "Forms with file uploads or restricted access only show their questions to a signed-in Google account, and this Accord deployment doesn't have its reader account set up yet.",
-  expired: "Accord normally reads these through its own Google account, but that session has expired — the site owner needs to sign it in again.",
-  denied:  "This form is restricted to a specific organisation, so even Accord's own Google account can't view it. Only a member's browser can.",
+  none:    "This form only shows its questions to a signed-in Google account, and Accord's reader account isn't set up yet.",
+  expired: "Accord's own Google session has expired — the site owner needs to renew it.",
+  denied:  "This form is restricted to an organisation, so only a member's browser can read it.",
 };
 
 // ─── Preloader ────────────────────────────────────────────────────────────

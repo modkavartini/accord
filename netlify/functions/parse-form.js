@@ -204,9 +204,9 @@ function looksLikePermissionWall(html) {
 //   denied  — reader is signed in but the form is restricted to an org
 function signInResponse(formUrl, reader) {
   const detail = {
-    none:    "Accord's reader account isn't set up on this deployment",
-    expired: "Accord's reader account session has expired",
-    denied:  "it's restricted to an organisation Accord's reader account isn't part of",
+    none:    "Accord's reader account isn't set up",
+    expired: "Accord's Google session has expired",
+    denied:  "it's restricted to an organisation",
   }[reader];
   return json(403, {
     error: `${SIGNIN_ERROR} — ${detail}`,

@@ -175,7 +175,7 @@
   <div class="setup-banner hidden" id="setup-banner">
     <div class="setup-banner-text">
       <p>Set up your profile in a minute</p>
-      <p>Answer a few quick questions — name, college, phone, roll number — and Accord fills them into every form you open from then on.</p>
+      <p>A few quick questions — name, college, phone — and every form fills itself.</p>
     </div>
     <div class="setup-banner-actions">
       <button class="btn btn-ghost btn-sm" id="setup-banner-dismiss" type="button">Not now</button>
@@ -206,7 +206,7 @@
         <input class="input" id="e-name" autocomplete="off" />
       </div>
       <div class="field">
-        <label class="label">Custom alias <span class="label-hint">(optional — leave empty to use only the canonical /go/&lt;form-id&gt; link)</span></label>
+        <label class="label">Custom alias <span class="label-hint">(optional)</span></label>
         <div class="slug-group">
           <span class="slug-prefix">accord-ingly.netlify.app/go/</span>
           <input class="slug-input" id="e-slug" placeholder="my-event-2026" autocomplete="off" />
@@ -214,7 +214,7 @@
         <p class="field-error hidden" id="e-slug-error"></p>
       </div>
       <div class="field">
-        <label class="label">Google Form URL <span style="font-weight:400;color:var(--text-muted);">(paste any form link to re-detect fields)</span></label>
+        <label class="label">Google Form URL <span class="label-hint">(paste to re-detect fields)</span></label>
         <input class="input" id="e-form-url" autocomplete="off" />
         <p class="field-status hidden" id="e-form-status"></p>
         <div class="detected-list hidden" id="e-detected"></div>
@@ -235,10 +235,10 @@
       <button class="modal-close" id="delete-account-close">×</button>
     </div>
     <p style="font-size:14px;line-height:1.7;color:rgba(240,240,240,0.65);margin-bottom:6px;">
-      This permanently deletes your profile rules, every Accord you've created, and your sign-in. <strong style="color:rgba(240,240,240,0.9);">This cannot be undone.</strong>
+      Deletes your profile, your saved Accords and your sign-in. <strong style="color:rgba(240,240,240,0.9);">This can't be undone.</strong>
     </p>
     <p style="font-size:12px;line-height:1.6;color:rgba(240,240,240,0.4);margin-top:12px;">
-      Google may re-prompt you to sign in to confirm — that's a security check, not a second account.
+      Google may ask you to sign in again to confirm.
     </p>
     <div class="modal-actions">
       <button class="btn btn-ghost" id="delete-account-cancel">Keep my account</button>

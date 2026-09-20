@@ -139,7 +139,7 @@ async function loadAccords() {
     list.innerHTML = `
       <div class="empty-state">
         <p class="empty-title">No saved Accords yet</p>
-        <p class="empty-sub">You don't need to save anything to use Accord — visit any form via <code>/go/&lt;form-id&gt;</code> and it auto-fills. Save a form here to give it a friendly alias.</p>
+        <p class="empty-sub">Any form auto-fills via <code>/go/&lt;form-id&gt;</code>. Save one here to give it a short alias.</p>
         <a class="btn btn-primary" href="/create-accord">Save your first Accord</a>
       </div>`;
     return;

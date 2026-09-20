@@ -22,34 +22,34 @@ const STEPS = [
   {
     key: 'name', label: 'Name', required: true,
     question: "What's your name?",
-    hint: "Exactly as you'd write it on a form — Accord types this wherever a form asks for your name.",
+    hint: "As you'd write it on a form.",
     patterns: ['Name'], autocomplete: 'name', placeholder: 'Your full name',
     prefill: (user, rule) => ruleValue(rule, user) || user.displayName || '',
   },
   {
     key: 'email', label: 'Email',
     question: 'Which email should forms get?',
-    hint: "Usually your Google email. Change it if you'd rather forms reach you somewhere else.",
+    hint: 'Change it if forms should reach you somewhere else.',
     patterns: ['Email', 'E-mail'], type: 'email', autocomplete: 'email', placeholder: 'you@example.com',
     prefill: (user, rule) => ruleValue(rule, user) || user.email || '',
   },
   {
     key: 'phone', label: 'Phone Number',
     question: "What's your phone number?",
-    hint: "Include the country code if you register for events outside India. Skip if you'd rather type it each time.",
+    hint: 'Add the country code if you register for events abroad.',
     patterns: ['Phone', 'Mobile', 'Contact', 'WhatsApp'], type: 'tel', autocomplete: 'tel', placeholder: '+91 98765 43210',
   },
   {
     key: 'org', label: 'College',
     question: 'What organisation, college or institution are you part of?',
-    hint: 'Write the full name. In dropdowns Accord also understands abbreviations, so "College of Engineering Trivandrum" still picks "CET".',
+    hint: 'Full name — in dropdowns Accord also matches abbreviations like "CET".',
     patterns: ['College', 'Institution', 'University', 'Organisation', 'Organization', 'Institute', 'School'],
     autocomplete: 'organization', placeholder: 'e.g. College of Engineering Trivandrum',
   },
   {
     key: 'branch', label: 'Branch',
     question: 'Which branch or department are you in?',
-    hint: "Skip this if it doesn't apply to you.",
+    hint: "Skip if it doesn't apply.",
     patterns: ['Branch', 'Department', 'Stream', 'Discipline'], placeholder: 'e.g. Computer Science',
   },
   {
@@ -62,13 +62,13 @@ const STEPS = [
   {
     key: 'roll', label: 'Roll Number',
     question: "What's your roll or register number?",
-    hint: 'Whatever your institution puts on ID cards and attendance sheets.',
+    hint: 'As it appears on your ID card.',
     patterns: ['Roll', 'Reg', 'Admission'], placeholder: 'e.g. TVE22CS042',
   },
   {
     key: 'ieee', label: 'IEEE Membership ID',
     question: 'Are you an IEEE member?',
-    hint: 'Lots of college events run on IEEE forms that ask this. Accord answers the yes/no question and fills your ID.',
+    hint: 'Accord answers the yes/no and fills your ID on IEEE forms.',
     patterns: ['IEEE', 'Membership ID'], placeholder: 'e.g. 98765432',
     yesNo: { label: 'IEEE Member', patterns: ['Are you an IEEE member', 'IEEE member?'], subLabel: 'Your IEEE membership ID' },
   },
@@ -236,7 +236,7 @@ function renderDone(form) {
   form.innerHTML = `
     <div class="ob-done-mark">a.</div>
     <h1 class="ob-question">You're set.</h1>
-    <p class="ob-hint">Accord now fills ${rows.length} field${rows.length === 1 ? '' : 's'} on every form you open through it. Tweak any of these later from your profile.</p>
+    <p class="ob-hint">Accord now fills ${rows.length} field${rows.length === 1 ? '' : 's'} on every form. Edit them anytime in your profile.</p>
     <div class="ob-summary">
       ${rows.map(r => `<div class="ob-summary-row"><span class="k">${escHtml(r.k)}</span><span class="v">${escHtml(r.v)}</span></div>`).join('')}
     </div>
