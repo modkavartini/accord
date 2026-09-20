@@ -83,6 +83,8 @@ function hidePreloader() {
   if (!p) return;
   p.classList.add('done');
   setTimeout(() => p.remove(), 200);
+  // Android app: the native loading screen stays up until we say so.
+  try { window.AccordBridge?.gateReady?.(); } catch {}
 }
 
 // ─── Path parsing ─────────────────────────────────────────────────────────

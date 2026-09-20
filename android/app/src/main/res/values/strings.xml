@@ -15,4 +15,8 @@
     <string name="sign_in_tagline">Sign in once, and every form you tap is auto-filled with your saved profile.</string>
     <string name="open_filled_forms_in_app">Open filled forms inside Accord</string>
     <string name="open_filled_forms_in_app_desc">When off, the prefilled Google Form opens in your default browser after the gate.</string>
+    <string name="loading_failed_title">Accord couldn\'t load</string>
+    <string name="loading_title">Fetching your saved answers…</string>
+    <string name="proceed_without_accord">Proceed to form without Accord</string>
+    <string name="proceed_without_accord_hint">Opens the plain Google Form — nothing gets auto-filled.</string>
 </resources>

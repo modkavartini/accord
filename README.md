@@ -19,6 +19,19 @@ Same form, both ways — open them side by side:
 
 Step-by-step profile setup: one question per screen (name, email, phone, college, branch, year, roll number, IEEE membership). Each answer becomes a rule in the user's profile — the same rules `/profile` edits by hand — so nothing else changes. Brand-new accounts (only the seeded Name + Email, never offered the questions) are sent straight there from the dashboard; everyone else sees a dismissible "Set up your profile in a minute" banner until they finish it. Completion/dismissal is stored as `onboardingStatus: 'done' | 'skipped'` on the profile doc, so it follows the user across devices and the Android app (which loads the same pages) needs no update.
 
+## Android release builds
+
+Release builds are signed with the key in `android/keystore.properties` (git-ignored; see `keystore.properties.example`). The keystore lives outside the repo at `~/.android/accord-release.jks` — **back it up**; without it no update can ever be shipped to the same app. Its SHA-1 must be registered in Firebase → Project settings → Android app (then re-download `google-services.json`) or Google Sign-In fails in release builds.
+
+```
+cd android
+JAVA_HOME="C:/Program Files/Android/Android Studio/jbr" ./gradlew assembleRelease bundleRelease
+# → app/build/outputs/apk/release/app-release.apk   (sideload)
+# → app/build/outputs/bundle/release/app-release.aab (Play Console)
+```
+
+Bump `versionCode`/`versionName` in `app/build.gradle` for every upload. A release-signed build won't install over the old debug-signed one — uninstall first.
+
 ## Reader account (forms that require Google sign-in)
 
 Forms with file-upload questions, verified email collection or "limit to 1 response" only show their questions to a signed-in Google account, so an anonymous server fetch gets a 401. Accord handles these with a **dedicated Google account** — the *reader* — whose browser session `parse-form` reuses whenever the anonymous fetch is walled. Any signed-in Google account can view such forms unless the owner restricted them to their organisation, so this covers nearly everything; the Chrome extension remains the fallback for org-restricted forms.

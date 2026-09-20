@@ -5,3 +5,8 @@
 # pins the class name too so stack traces and evaluateJavascript hooks stay readable.
 -keep class com.accord.app.AccordBridge { *; }
 -keepattributes JavascriptInterface
+
+# Keep file/line info so crash stack traces from release builds are readable
+# (the mapping file under app/build/outputs/mapping/release/ de-obfuscates them).
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile

@@ -22,6 +22,8 @@ class AccordBridge(
     private val onRequestSignIn: (requestId: String, mode: String) -> Unit,
     /** Native sign-out (clears Google Sign-In so the next prompt re-asks). */
     private val onSignOut: () -> Unit,
+    /** Gate page has rendered its first card — drop the native loading screen. */
+    private val onGateReady: () -> Unit = {},
 ) {
 
     /**
@@ -88,6 +90,17 @@ class AccordBridge(
     @JavascriptInterface
     fun signOut() {
         onSignOut()
+    }
+
+    /**
+     * gate.js calls this when its preloader goes away (the confirm / sign-in /
+     * not-found card is on screen). GateActivity hides the native loading
+     * overlay — until then the user only sees the native screen with its
+     * "proceed without Accord" escape hatch.
+     */
+    @JavascriptInterface
+    fun gateReady() {
+        onGateReady()
     }
 
     /**

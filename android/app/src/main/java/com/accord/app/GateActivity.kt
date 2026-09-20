@@ -11,11 +11,14 @@ import android.view.View
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebChromeClient.FileChooserParams
+import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.Button
 import android.widget.ProgressBar
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.ActivityResultLauncher
@@ -38,6 +41,18 @@ class GateActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
     private lateinit var progress: ProgressBar
+    private lateinit var loadingOverlay: View
+    private lateinit var loadingTitle: TextView
+    private lateinit var loadingSpinner: View
+
+    /**
+     * Form ID this activity was launched for (null for /dashboard etc.).
+     * Drives the native loading screen and its "proceed without Accord"
+     * escape hatch, which needs to rebuild the plain form URL.
+     */
+    private var launchedFormId: String? = null
+    private var overlayDismissed = false
+    private val overlayFallback = Runnable { hideLoadingOverlay() }
     private lateinit var auth: AuthHelper
     private lateinit var bridge: AccordBridge
 
@@ -57,11 +72,22 @@ class GateActivity : AppCompatActivity() {
 
         webView  = findViewById(R.id.webView)
         progress = findViewById(R.id.progress)
+        loadingOverlay = findViewById(R.id.loadingOverlay)
+        loadingTitle   = findViewById(R.id.loadingTitle)
+        loadingSpinner = findViewById(R.id.loadingSpinner)
 
         val target = resolveTarget(intent)
         if (target == null) {
             finish()
             return
+        }
+
+        // Form launches get the native loading screen; dashboard/profile
+        // loads don't (nothing to bypass there).
+        launchedFormId = intent?.getStringExtra(EXTRA_FORM_ID)?.takeIf { it.isNotBlank() }
+        if (launchedFormId != null) {
+            loadingOverlay.visibility = View.VISIBLE
+            findViewById<Button>(R.id.bypassBtn).setOnClickListener { proceedWithoutAccord() }
         }
 
         auth = AuthHelper(this) { user, idToken, error ->
@@ -84,6 +110,7 @@ class GateActivity : AppCompatActivity() {
                 auth.signIn(forceAccountPicker = true)
             },
             onSignOut = { auth.signOut() },
+            onGateReady = { runOnUiThread { hideLoadingOverlay() } },
         )
 
         // Register the file-picker launcher BEFORE configureWebView so the
@@ -270,8 +297,60 @@ class GateActivity : AppCompatActivity() {
 
             override fun onPageFinished(view: WebView?, url: String?) {
                 progress.visibility = View.GONE
+                // gate.js normally calls AccordBridge.gateReady() once its card
+                // is up. If it never does (JS error, stale cache), don't leave
+                // the user staring at the loading screen forever.
+                if (!overlayDismissed) {
+                    webView.removeCallbacks(overlayFallback)
+                    webView.postDelayed(overlayFallback, 8_000)
+                }
+            }
+
+            override fun onReceivedError(
+                view: WebView?,
+                request: WebResourceRequest?,
+                error: WebResourceError?,
+            ) {
+                // Main-frame failure (offline, site down): keep the loading
+                // screen — with its bypass button — but stop pretending.
+                if (request?.isForMainFrame == true && !overlayDismissed) {
+                    loadingTitle.setText(R.string.loading_failed_title)
+                    loadingSpinner.visibility = View.INVISIBLE
+                    webView.removeCallbacks(overlayFallback)
+                }
             }
         }
+    }
+
+    private fun hideLoadingOverlay() {
+        if (overlayDismissed) return
+        overlayDismissed = true
+        webView.removeCallbacks(overlayFallback)
+        loadingOverlay.animate().alpha(0f).setDuration(220).withEndAction {
+            loadingOverlay.visibility = View.GONE
+        }.start()
+    }
+
+    /**
+     * "Proceed to form without Accord": open the plain Google Form, skipping
+     * the gate entirely. Short (forms.gle) IDs are loaded in the WebView so
+     * Google's redirect resolves them to the docs.google.com URL — the
+     * navigation handler then applies the open-in-app preference exactly as
+     * it does for the gate's own redirect. Opening a forms.gle URL externally
+     * would just bounce back into Accord when it's the default handler.
+     */
+    private fun proceedWithoutAccord() {
+        val id = launchedFormId ?: return
+        val isLongId = id.startsWith("1FAIpQLS")
+        val url = if (isLongId) "https://docs.google.com/forms/d/e/$id/viewform" else "https://forms.gle/$id"
+        hideLoadingOverlay()
+        if (isLongId && !Prefs.openFormsInApp(this)) {
+            openExternally(Uri.parse(url))
+            finish()
+            return
+        }
+        webView.stopLoading()
+        webView.loadUrl(url)
     }
 
     /**
@@ -291,6 +370,7 @@ class GateActivity : AppCompatActivity() {
             host == "docs.google.com" && (url.path?.startsWith("/forms/") == true)
 
         if (isGoogleForm) {
+            hideLoadingOverlay()
             return if (Prefs.openFormsInApp(this)) {
                 // Stay in-app: let WebView load the Google Form.
                 false
@@ -317,6 +397,7 @@ class GateActivity : AppCompatActivity() {
     override fun onDestroy() {
         // Defensive cleanup so a long-running JS timer can't reach a detached
         // bridge after onDestroy.
+        webView.removeCallbacks(overlayFallback)
         webView.removeJavascriptInterface("AccordBridge")
         webView.stopLoading()
         webView.webChromeClient = null
