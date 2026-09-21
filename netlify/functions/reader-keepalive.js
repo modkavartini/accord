@@ -1,7 +1,7 @@
 // Scheduled keep-alive for the reader account session (see lib/reader-session).
 // A browser keeps a Google session healthy simply by making requests and
 // storing the rotated cookies Google sends back; this does the same every
-// 30 minutes so the session doesn't go stale between walled-form visits.
+// 10 minutes (Google's RotateCookies hints 600 s) so the session doesn't go stale between walled-form visits.
 // Netlify runs scheduled functions on production deploys only.
 
 const { schedule } = require('@netlify/functions');
@@ -44,4 +44,4 @@ const handler = async (event) => {
   return { statusCode: 200 };
 };
 
-exports.handler = schedule('*/30 * * * *', handler);
+exports.handler = schedule('*/10 * * * *', handler);
