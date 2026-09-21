@@ -51,6 +51,33 @@
       margin-bottom: 36px;
     }
     .fill-card { padding: 28px; border-radius: 16px; }
+    .fill-input-wrap { position: relative; }
+    .fill-ph {
+      position: absolute;
+      inset: 1px;                 /* inside the input's border */
+      padding: 0 16px;            /* matches .input horizontal padding */
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      pointer-events: none;
+      color: var(--text-muted);
+      font-size: 15px;
+      white-space: nowrap;
+    }
+    .fill-ph.hidden { display: none; }
+    .fill-ph-text {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+      transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.28s ease;
+    }
+    .fill-ph-text.is-out { transform: translateY(-120%); opacity: 0; }
+    .fill-ph-text.is-in  { transform: translateY(120%);  opacity: 0; transition: none; }
+    @media (prefers-reduced-motion: reduce) {
+      .fill-ph-text { transition: none; }
+      .fill-ph-text.is-out, .fill-ph-text.is-in { transform: none; }
+    }
     .fill-result {
       margin-top: 20px;
       padding-top: 20px;
@@ -130,7 +157,11 @@
   <div class="glass fill-card">
     <div class="field">
       <label class="label">Google Form URL</label>
-      <input class="input" id="fill-form-url" placeholder="https://docs.google.com/forms/d/.../viewform" autocomplete="off" autofocus />
+      <div class="fill-input-wrap">
+        <input class="input" id="fill-form-url" autocomplete="off" autofocus aria-label="Google Form link" />
+        <!-- Cycling placeholder: every kind of link that points at a form works -->
+        <div class="fill-ph" id="fill-ph" aria-hidden="true"><span class="fill-ph-text" id="fill-ph-text"></span></div>
+      </div>
       <p class="field-status hidden" id="fill-status"></p>
     </div>
 

@@ -11,6 +11,41 @@ function hidePreloader() {
 }
 hidePreloader();
 
+// ─── Cycling placeholder ──────────────────────────────────────────────────
+// Rolls through the shapes of link that all work — full form URL, forms.gle,
+// common shorteners, a bare form ID — so nobody wonders whether theirs will.
+const PLACEHOLDERS = [
+  'https://docs.google.com/forms/d/e/1FAIpQLSe…/viewform',
+  'https://forms.gle/R6faU74qPRPAzchZ9',
+  'https://bit.ly/ieee-art-challenge',
+  'https://tinyurl.com/tech-fest-2026',
+  '1FAIpQLSeOTqizH7yk-wtoI_LUe43gR5gqVzJCXR4ap4tBydpCpQZTkw',
+  'https://t.co/k9x2Qf3Lm',
+];
+(function cyclePlaceholder() {
+  const input = $('fill-form-url');
+  const ph = $('fill-ph'), text = $('fill-ph-text');
+  if (!input || !ph || !text) return;
+  let i = 0;
+  text.textContent = PLACEHOLDERS[0];
+  const sync = () => ph.classList.toggle('hidden', input.value.length > 0);
+  input.addEventListener('input', sync);
+  sync();
+  setInterval(() => {
+    if (input.value) return;                 // nothing to show while they type
+    if (document.hidden) return;             // don't churn in a background tab
+    i = (i + 1) % PLACEHOLDERS.length;
+    text.classList.add('is-out');
+    setTimeout(() => {
+      text.textContent = PLACEHOLDERS[i];
+      text.classList.remove('is-out');
+      text.classList.add('is-in');
+      // Next frame: let the "in" start position paint, then release to 0.
+      requestAnimationFrame(() => requestAnimationFrame(() => text.classList.remove('is-in')));
+    }, 280);
+  }, 2600);
+})();
+
 // ─── Toast ────────────────────────────────────────────────────────────────
 function toast(msg) {
   const el = $('toast');
