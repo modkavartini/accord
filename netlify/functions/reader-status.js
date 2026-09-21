@@ -10,7 +10,7 @@
 //
 // Never echoes the cookie or anything derived from it.
 
-const { loadReaderSession, absorb } = require('./lib/reader-session');
+const { loadReaderSession, absorb, loadHealth } = require('./lib/reader-session');
 
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36';
 // Signed out, this 302s to accounts.google.com/ServiceLogin; signed in it
@@ -29,6 +29,7 @@ exports.handler = async (event) => {
     signedIn: null,
     session: session.source === 'none' ? null : session.source,
     sessionUpdatedAt: session.updatedAt,
+    keepalive: await loadHealth(event),   // last scheduled run: { at, signedIn, rotated, ... }
     checkedAt: new Date().toISOString(),
   };
   if (body.configured && !hasOsid(session.cookie)) {

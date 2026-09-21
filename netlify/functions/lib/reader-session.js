@@ -120,4 +120,41 @@ async function absorb(res, sentCookie) {
   return merged;
 }
 
-module.exports = { loadReaderSession, saveReaderSession, mergeSetCookies, absorb, setCookiesOf };
+const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36';
+
+/**
+ * Do what Chrome does about once an hour for a signed-in Google account:
+ * ask accounts.google.com for a fresh __Secure-1PSIDTS / 3PSIDTS. Google
+ * retires the previous token shortly after issuing a new one, so whoever
+ * rotates last owns the session — this is why the server must rotate
+ * itself and the reader's Chrome profile must stay closed once copied.
+ * Returns the merged jar (unchanged if Google didn't issue new tokens).
+ */
+async function rotateSession(cookie) {
+  const res = await fetch('https://accounts.google.com/RotateCookies', {
+    method: 'POST',
+    redirect: 'manual',
+    headers: {
+      'User-Agent': USER_AGENT,
+      'Content-Type': 'application/json',
+      'Origin': 'https://accounts.google.com',
+      'Cookie': cookie,
+    },
+    body: '[000,"-0000000000000000000"]',
+  });
+  const merged = await absorb(res, cookie);
+  return { status: res.status, rotated: merged !== cookie, cookie: merged };
+}
+
+/** Last keepalive outcome, for reader-status. Never includes cookie material. */
+async function recordHealth(event, health) {
+  connect(event);
+  try { await store().setJSON('health', { ...health, at: new Date().toISOString() }); }
+  catch (e) { console.warn('[reader-session] health write failed:', e.message); }
+}
+async function loadHealth(event) {
+  connect(event);
+  try { return await store().get('health', { type: 'json' }); } catch { return null; }
+}
+
+module.exports = { loadReaderSession, saveReaderSession, mergeSetCookies, absorb, setCookiesOf, rotateSession, recordHealth, loadHealth };
