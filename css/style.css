@@ -14,6 +14,7 @@
   --text-muted: rgba(240,240,240,0.25);
   --mono: 'Space Mono', monospace;
   --display: 'Major Mono Display', monospace;
+  --logo: 'Cormorant Garamond', Georgia, serif;   /* the "a." mark only */
   --body: 'Urbanist', sans-serif;
 }
 
@@ -240,9 +241,10 @@ nav, main, footer, .modal-overlay { position: relative; z-index: 1; }
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--body);
+  font-family: var(--logo);
+  font-style: italic;
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 500;
   color: black;
   flex-shrink: 0;
   letter-spacing: -0.04em;
@@ -572,8 +574,9 @@ nav, main, footer, .modal-overlay { position: relative; z-index: 1; }
   pointer-events: none;
 }
 .preloader-mark {
-  font-family: var(--body);
-  font-weight: 700;
+  font-family: var(--logo);
+  font-style: italic;
+  font-weight: 500;
   font-size: 64px;
   letter-spacing: -0.04em;
   color: rgba(240,240,240,0.85);
@@ -1074,8 +1077,9 @@ nav, main, footer, .modal-overlay { position: relative; z-index: 1; }
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--body);
-  font-weight: 700;
+  font-family: var(--logo);
+  font-style: italic;
+  font-weight: 500;
   font-size: 32px;
   font-weight: 500;
   color: black;

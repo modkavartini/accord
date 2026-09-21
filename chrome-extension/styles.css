@@ -45,8 +45,9 @@
 }
 
 .accord-fab-logo {
-  font-family: 'Urbanist', system-ui, sans-serif;
-  font-weight: 700;
+  font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-weight: 500;
   font-size: 20px;
   line-height: 1;
   letter-spacing: -1px;
@@ -98,8 +99,9 @@
 }
 
 .accord-toast-logo {
-  font-family: 'Urbanist', system-ui, sans-serif;
-  font-weight: 700;
+  font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-weight: 500;
   font-size: 22px;
   line-height: 1;
   letter-spacing: -1px;
@@ -193,8 +195,9 @@
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  font-family: 'Urbanist', system-ui, sans-serif !important;
-  font-weight: 700 !important;
+  font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif !important;
+  font-style: italic !important;
+  font-weight: 500 !important;
   font-size: 15px !important;
   line-height: 1 !important;
   letter-spacing: -1px !important;

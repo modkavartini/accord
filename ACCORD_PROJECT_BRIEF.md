@@ -40,7 +40,8 @@ Since it's a static site with multiple HTML pages (not SPA), routing is handled 
 ## Design Language
 - **Theme:** Black (#080808 bg), white text, glassmorphism cards
 - **Fonts (Google Fonts):**
-  - `Major Mono Display` — display/headings and the logo mark (single weight, no italics)
+  - `Major Mono Display` — display/headings (single weight, no italics)
+  - `Cormorant Garamond` (italic 500) — the "a." logo mark only; wordmark is Urbanist
   - `Urbanist` — body text, UI labels, buttons
   - `Space Mono` — slugs, code-like fields, metadata
 - **Glass cards:** `background: rgba(255,255,255,0.04)`, `border: 1px solid rgba(255,255,255,0.08)`, `backdrop-filter: blur(20px)`
