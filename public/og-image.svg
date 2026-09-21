@@ -16,19 +16,19 @@
   <!-- Logo mark -->
   <rect x="540" y="120" width="120" height="120" rx="26" ry="26" fill="#f0f0f0"/>
   <text x="600" y="218"
-        font-family="'Cormorant Garamond', Georgia, serif"
+        font-family="'Major Mono Display', 'Courier New', monospace"
         font-style="italic" font-weight="500" font-size="84"
         fill="#080808" text-anchor="middle" letter-spacing="-2">a.</text>
 
   <!-- Title -->
   <text x="600" y="360"
-        font-family="'Cormorant Garamond', Georgia, serif"
+        font-family="'Major Mono Display', 'Courier New', monospace"
         font-weight="300" font-size="86"
         fill="#f0f0f0" text-anchor="middle" letter-spacing="-2">
     Forms that know
   </text>
   <text x="600" y="448"
-        font-family="'Cormorant Garamond', Georgia, serif"
+        font-family="'Major Mono Display', 'Courier New', monospace"
         font-style="italic" font-weight="300" font-size="86"
         fill="#f0f0f0" text-anchor="middle" letter-spacing="-2">
     who you are.

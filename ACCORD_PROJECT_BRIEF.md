@@ -40,7 +40,7 @@ Since it's a static site with multiple HTML pages (not SPA), routing is handled 
 ## Design Language
 - **Theme:** Black (#080808 bg), white text, glassmorphism cards
 - **Fonts (Google Fonts):**
-  - `Cormorant Garamond` — display/headings (italic for logo, light for hero)
+  - `Major Mono Display` — display/headings and the logo mark (single weight, no italics)
   - `Urbanist` — body text, UI labels, buttons
   - `DM Mono` — slugs, code-like fields, metadata
 - **Glass cards:** `background: rgba(255,255,255,0.04)`, `border: 1px solid rgba(255,255,255,0.08)`, `backdrop-filter: blur(20px)`
@@ -156,4 +156,4 @@ To get entry IDs:
 ## Prompt to continue in Claude (VSCode Terminal)
 Paste this at the start of your next session:
 
-> I'm building "Accord" — a vanilla HTML/CSS/JS web app (no build step, no frameworks) that creates identity-verified Google Form links. Firebase Auth (Google OAuth) + Firestore for backend. Hosted on Netlify at accord-ingly.netlify.app. The full project spec is in ACCORD_PROJECT_BRIEF.md. Please build all the files: index.html, dashboard.html, gate.html, css/style.css, and all js/ files. Design: glassmorphism, black background (#080808), white text, Cormorant Garamond for headings, Urbanist for body, DM Mono for mono. Firebase config placeholders should use YOUR_* values I'll replace.
+> I'm building "Accord" — a vanilla HTML/CSS/JS web app (no build step, no frameworks) that creates identity-verified Google Form links. Firebase Auth (Google OAuth) + Firestore for backend. Hosted on Netlify at accord-ingly.netlify.app. The full project spec is in ACCORD_PROJECT_BRIEF.md. Please build all the files: index.html, dashboard.html, gate.html, css/style.css, and all js/ files. Design: glassmorphism, black background (#080808), white text, Major Mono Display for headings, Urbanist for body, DM Mono for mono. Firebase config placeholders should use YOUR_* values I'll replace.

@@ -115,7 +115,7 @@
   <text
      x="640"
      y="244"
-     font-family="'Cormorant Garamond', Georgia, 'Times New Roman', serif"
+     font-family="'Major Mono Display', 'Courier New', monospace"
      font-style="italic"
      font-weight="500"
      font-size="148"
@@ -127,7 +127,7 @@
   <text
      x="640"
      y="466"
-     font-family="'Cormorant Garamond', Georgia, 'Times New Roman', serif"
+     font-family="'Major Mono Display', 'Courier New', monospace"
      font-weight="300"
      font-size="200"
      fill="#f0f0f0"

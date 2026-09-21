@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Accord — Forms that know who you are</title>
-  <meta name="description" content="Identity-verified Google Form prefill. Set up your details once — Accord auto-fills every form for you, every time." />
+  <meta name="description" content="Set up your details once. Every Google Form you open through Accord — on the web, the Android app or the Chrome extension — is already filled in." />
   <meta name="theme-color" content="#080808" />
 
   <!-- Favicon -->
@@ -15,20 +15,20 @@
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Accord" />
   <meta property="og:title" content="Accord — Forms that know who you are" />
-  <meta property="og:description" content="Identity-verified Google Form prefill. Set up your details once — Accord auto-fills every form for you, every time." />
+  <meta property="og:description" content="Set up your details once. Every Google Form you open through Accord is already filled in." />
   <meta property="og:image" content="public/og-image.svg" />
-  <meta property="og:url" content="https://accord-ingly.netlify.app/" />
+  <meta property="og:url" content="https://accord.modka.is-a.dev/" />
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Accord — Forms that know who you are" />
-  <meta name="twitter:description" content="Identity-verified Google Form prefill. Set up your details once — Accord auto-fills every form for you, every time." />
+  <meta name="twitter:description" content="Set up your details once. Every Google Form you open through Accord is already filled in." />
   <meta name="twitter:image" content="public/og-image.svg" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="preconnect" href="https://www.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Urbanist:wght@300;400;500;600;700&family=DM+Mono:wght@300;400;500&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Major+Mono+Display&family=Urbanist:wght@300;400;500;600;700&family=DM+Mono:wght@300;400;500&display=swap" />
   <link rel="stylesheet" href="css/style.css" />
   <style>
     .hero { min-height: 100vh; display: flex; flex-direction: column; }
@@ -67,16 +67,16 @@
     @keyframes pulse { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
 
     .hero-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(52px, 9vw, 100px);
-      font-weight: 300;
-      line-height: 1.0;
-      letter-spacing: -0.03em;
+      font-family: 'Major Mono Display', monospace;
+      font-size: clamp(30px, 6.4vw, 68px);
+      font-weight: 400;
+      line-height: 1.08;
+      letter-spacing: -0.02em;
       color: #f0f0f0;
       margin-bottom: 24px;
-      max-width: 720px;
+      max-width: 900px;
     }
-    .hero-title em { font-style: italic; }
+    .hero-title em { font-style: normal; color: rgba(240,240,240,0.55); }
 
     .hero-sub {
       font-size: 17px;
@@ -87,30 +87,99 @@
       margin-bottom: 32px;
     }
 
-    .pitch-card {
-      max-width: 540px;
+    /* Three ways to open a form through Accord */
+    .ways {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      width: 100%;
+      max-width: 780px;
       margin: 0 auto 36px;
-      padding: 18px 22px;
+      text-align: left;
+    }
+    .way {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 18px 18px 16px;
       background: rgba(255,255,255,0.03);
       border: 1px solid rgba(255,255,255,0.07);
       border-radius: 14px;
-      font-size: 14px;
-      line-height: 1.65;
-      color: rgba(240,240,240,0.6);
-      text-align: left;
+      color: inherit;
+      text-decoration: none;
+      transition: border-color 0.15s, background 0.15s;
     }
-    .pitch-card strong { color: rgba(240,240,240,0.92); font-weight: 600; }
-    .pitch-card .pitch-mono {
+    .way:hover { border-color: rgba(255,255,255,0.16); background: rgba(255,255,255,0.05); }
+    .way-kicker {
       font-family: 'DM Mono', monospace;
-      font-size: 11px;
-      letter-spacing: 0.06em;
-      color: rgba(240,240,240,0.35);
+      font-size: 10px;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
-      margin-bottom: 8px;
-      display: block;
+      color: rgba(240,240,240,0.35);
+    }
+    .way-title { font-size: 15px; font-weight: 600; color: rgba(240,240,240,0.92); }
+    .way-text { font-size: 13px; line-height: 1.55; color: rgba(240,240,240,0.5); }
+    .way-text code {
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      color: rgba(240,240,240,0.75);
+      background: rgba(255,255,255,0.05);
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+    .way-link {
+      margin-top: auto;
+      padding-top: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(240,240,240,0.7);
+    }
+    .way:hover .way-link { color: #fff; }
+    @media (max-width: 640px) {
+      .ways { grid-template-columns: 1fr; }
+      .way { flex-direction: column; }
     }
 
-    .hero-cta { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-bottom: 50px; }
+    /* How it works — three steps */
+    .steps {
+      display: flex;
+      justify-content: center;
+      gap: 28px;
+      flex-wrap: wrap;
+      max-width: 780px;
+      margin: 0 auto 40px;
+    }
+    .step {
+      flex: 1 1 200px;
+      max-width: 240px;
+      text-align: left;
+      font-size: 13px;
+      line-height: 1.55;
+      color: rgba(240,240,240,0.5);
+    }
+    .step-num {
+      font-family: 'Major Mono Display', monospace;
+      font-size: 22px;
+      color: rgba(240,240,240,0.85);
+      margin-bottom: 6px;
+    }
+    .step strong { display: block; color: rgba(240,240,240,0.9); font-weight: 600; margin-bottom: 2px; font-size: 14px; }
+
+    /* For organisers */
+    .organisers {
+      max-width: 540px;
+      margin: 0 auto 8px;
+      padding: 14px 18px;
+      border: 1px dashed rgba(255,255,255,0.1);
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: rgba(240,240,240,0.45);
+    }
+    .organisers strong { color: rgba(240,240,240,0.85); font-weight: 600; }
+    .organisers a { color: rgba(240,240,240,0.85); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(240,240,240,0.3); }
+
+    .hero-cta { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-bottom: 40px; }
 
     .feature-pills {
       display: flex;
@@ -162,7 +231,7 @@
       padding: 60px 24px 80px;
     }
     .legal-panel h2 {
-      font-family: 'Cormorant Garamond', serif;
+      font-family: 'Major Mono Display', monospace;
       font-size: 32px;
       font-weight: 300;
       letter-spacing: -0.02em;
@@ -230,7 +299,7 @@
     <main class="hero-main">
       <div class="badge animate-fade-up d1">
         <span class="badge-dot"></span>
-        Identity-based Form Routing
+        Google Forms, already filled in
       </div>
 
       <h1 class="hero-title animate-fade-up d2">
@@ -238,13 +307,8 @@
       </h1>
 
       <p class="hero-sub animate-fade-up d3">
-        Share a link. Whoever opens it signs in with Google and the form fills itself — name, email, everything they've saved.
+        Save your name, email, phone, college and roll number once. Every Google Form you open through Accord after that is already filled in.
       </p>
-
-      <div class="pitch-card animate-fade-up d4">
-        <span class="pitch-mono">Set up once. Save time forever.</span>
-        Spend <strong>20 seconds</strong> on your profile once — phone, college, roll number, IEEE ID — and <strong>never type them into a form again</strong>.
-      </div>
 
       <div class="hero-cta animate-fade-up d5">
         <button class="btn btn-primary" id="sign-in-hero" style="padding:14px 32px;font-size:15px;">
@@ -257,15 +321,58 @@
           <span id="sign-in-hero-label">Continue with Google</span>
         </button>
         <a class="btn btn-ghost" href="/fill" style="padding:14px 28px;font-size:14px;">
-          Auto-fill any form →
+          Auto-fill a form now →
+        </a>
+      </div>
+
+      <div class="steps animate-fade-up d5">
+        <div class="step">
+          <div class="step-num">1</div>
+          <strong>Sign in with Google</strong>
+          Name and email are saved on the spot.
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <strong>Answer a few questions</strong>
+          Phone, college, branch, year, roll number, IEEE ID — about a minute.
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <strong>Open forms through Accord</strong>
+          Text fields, dropdowns and checkboxes are filled. You check and submit.
+        </div>
+      </div>
+
+      <div class="ways animate-fade-up d5">
+        <a class="way" href="/fill">
+          <span class="way-kicker">Any browser</span>
+          <span class="way-title">Paste a link</span>
+          <span class="way-text">Drop any Google Form link on the fill page, or put the form ID after <code>/go/</code>.</span>
+          <span class="way-link">Open the fill page →</span>
+        </a>
+        <a class="way" href="https://github.com/modkavartini/accord/releases/latest" target="_blank" rel="noopener">
+          <span class="way-kicker">Android</span>
+          <span class="way-title">Tap the link</span>
+          <span class="way-text">Make Accord the default for <code>forms.gle</code> links, or share any form link to it. The form opens filled.</span>
+          <span class="way-link">Get the app (APK) →</span>
+        </a>
+        <a class="way" href="https://github.com/modkavartini/accord/tree/main/chrome-extension" target="_blank" rel="noopener">
+          <span class="way-kicker">Chrome</span>
+          <span class="way-title">One button on every form</span>
+          <span class="way-text">The extension adds <em>Auto-fill with Accord</em> to every Google Form you land on, however you got there.</span>
+          <span class="way-link">Get the extension →</span>
         </a>
       </div>
 
       <div class="feature-pills animate-fade-up d5">
-        <span class="pill">Google Form Prefill</span>
-        <span class="pill">Verified Identities</span>
-        <span class="pill">Minimize Manual Entry</span>
+        <span class="pill">Works on forms that need Google sign-in</span>
+        <span class="pill">Dropdowns & checkboxes too</span>
+        <span class="pill">Only fills what you saved</span>
       </div>
+
+      <p class="organisers animate-fade-up d5" style="margin-top:28px;">
+        <strong>Running an event?</strong> Save the form as an Accord to get a short link like <code style="font-family:'DM Mono',monospace;font-size:12px;">/go/my-event</code>, and every response arrives with the attendee's verified Google name and email. <a href="/create-accord">Save an Accord →</a>
+      </p>
     </main>
   </div>
 
@@ -305,7 +412,7 @@
   </section>
 
   <footer class="site-footer">
-    <span>accord-ingly.netlify.app</span>
+    <span>accord.modka.is-a.dev</span>
     <span class="site-footer-credit">made with ❤️ by <a href="https://modka.netlify.app" target="_blank" rel="noopener">modkavartini</a></span>
     <div class="site-footer-links">
       <a href="#privacy">Privacy</a>

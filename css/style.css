@@ -13,7 +13,7 @@
   --text-dim: rgba(240,240,240,0.5);
   --text-muted: rgba(240,240,240,0.25);
   --mono: 'DM Mono', monospace;
-  --display: 'Cormorant Garamond', serif;
+  --display: 'Major Mono Display', monospace;
   --body: 'Urbanist', sans-serif;
 }
 
@@ -241,7 +241,6 @@ nav, main, footer, .modal-overlay { position: relative; z-index: 1; }
   align-items: center;
   justify-content: center;
   font-family: var(--display);
-  font-style: italic;
   font-size: 18px;
   font-weight: 500;
   color: black;
@@ -574,7 +573,6 @@ nav, main, footer, .modal-overlay { position: relative; z-index: 1; }
 }
 .preloader-mark {
   font-family: var(--display);
-  font-style: italic;
   font-weight: 500;
   font-size: 64px;
   letter-spacing: -0.04em;
@@ -855,7 +853,7 @@ nav, main, footer, .modal-overlay { position: relative; z-index: 1; }
   border-radius: 10px;
 }
 .profile-intro strong { color: rgba(240,240,240,0.7); }
-.profile-intro em { font-family: var(--display); font-style: italic; color: rgba(240,240,240,0.65); }
+.profile-intro em { font-family: var(--display); font-style: normal; color: rgba(240,240,240,0.65); }
 
 .profile-section { margin-top: 32px; margin-bottom: 24px; }
 .profile-section-title {
@@ -1077,7 +1075,6 @@ nav, main, footer, .modal-overlay { position: relative; z-index: 1; }
   align-items: center;
   justify-content: center;
   font-family: var(--display);
-  font-style: italic;
   font-size: 32px;
   font-weight: 500;
   color: black;
