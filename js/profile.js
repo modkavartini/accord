@@ -198,7 +198,7 @@ function renderChoiceLine(f) {
   const patterns = (f.choicePatterns || []).filter(Boolean);
   const mode = f.choiceMatch || 'auto';
   if (!patterns.length && mode === 'auto') return '';
-  const keyword = mode === 'auto' ? 'or option matching' : `or option that ${describeMatch(mode)}`;
+  const keyword = mode === 'auto' ? 'or alias' : `or option that ${describeMatch(mode)}`;
   const chips = patterns.length
     ? patterns.map(p => `<span class="pf-var pf-var-choice">${escHtml(p)}</span>`).join('')
     : `<span class="pf-var is-empty">(value above)</span>`;
@@ -306,7 +306,7 @@ $('f-source').addEventListener('change', applySourceUI);
 function applyChoiceUI() {
   const mode = $('f-choice-match').value;
   $('f-choice-hint').textContent = mode === 'auto'
-    ? 'Optional — extra spellings to try, e.g. "CSE, Computer Science".'
+    ? 'Short names a form might use instead, e.g. "CET".'
     : `Picks the first option that ${describeMatch(mode)} one of these. Text answers still get your value.`;
 }
 $('f-choice-match').addEventListener('change', applyChoiceUI);
@@ -323,7 +323,7 @@ async function saveField() {
   if (!label)            { toast('Add a label');                       return; }
   if (!patterns.length)  { toast('Add at least one word to look for'); return; }
   if (choiceMatch !== 'auto' && !choicePatterns.length) {
-    toast('Add option words, or switch back to "closest to my value"');
+    toast('Add aliases, or switch back to "matches my value or an alias"');
     return;
   }
 

@@ -109,7 +109,7 @@
     <p class="tip-box-title">How it works</p>
     <ul class="tip-list">
       <li>One rule = one detail (phone, college, roll number…). Its <strong>words to look for</strong> are matched against the question.</li>
-      <li><strong>Multiple choice?</strong> Accord picks the closest option itself — it knows "CSE" means Computer Science. Add option words only if a form phrases things oddly.</li>
+      <li><strong>Multiple choice?</strong> Accord picks the option that matches your value or one of its <strong>aliases</strong>. Nothing is guessed — add "CET" if forms list your college that way.</li>
       <li>Switch a rule off to leave that field blank for now.</li>
     </ul>
   </div>
@@ -190,13 +190,13 @@
       <div class="f-section">
         <p class="f-section-title">Multiple-choice questions</p>
         <p class="f-section-hint">
-          Accord picks the option closest to your value — <em>"Computer Science"</em> finds <em>"CSE"</em>. Add option words only if a form phrases it differently.
+          Accord picks the option that matches your value or one of these aliases. Nothing is guessed — add the short names forms use, e.g. <em>"CET"</em>.
         </p>
         <div class="hint-fields-row">
           <div class="field field-fixed">
             <label class="label">Option</label>
             <select class="input" id="f-choice-match">
-              <option value="auto">closest to my value</option>
+              <option value="auto">matches my value or an alias</option>
               <option value="contains">contains</option>
               <option value="startsWith">starts with</option>
               <option value="endsWith">ends with</option>
@@ -204,8 +204,8 @@
             </select>
           </div>
           <div class="field field-grow">
-            <label class="label">Option words <span class="label-hint">comma-separated</span></label>
-            <input class="input mono" id="f-choice-patterns" placeholder="Kidangoor, CEK" autocomplete="off" />
+            <label class="label">Aliases <span class="label-hint">comma-separated</span></label>
+            <input class="input mono" id="f-choice-patterns" placeholder="CET, Trivandrum" autocomplete="off" />
           </div>
         </div>
         <p class="field-hint" id="f-choice-hint"></p>

@@ -42,15 +42,17 @@ const STEPS = [
   {
     key: 'org', label: 'College',
     question: 'What organisation, college or institution are you part of?',
-    hint: 'Full name — in dropdowns Accord also matches abbreviations like "CET".',
+    hint: 'The full name, as forms usually list it.',
     patterns: ['College', 'Institution', 'University', 'Organisation', 'Organization', 'Institute', 'School'],
     autocomplete: 'organization', placeholder: 'e.g. College of Engineering Trivandrum',
+    aliases: { label: 'Short names forms might use', placeholder: 'e.g. CET, CE-TVM' },
   },
   {
     key: 'branch', label: 'Branch',
     question: 'Which branch or department are you in?',
     hint: "Skip if it doesn't apply.",
     patterns: ['Branch', 'Department', 'Stream', 'Discipline'], placeholder: 'e.g. Computer Science',
+    aliases: { label: 'Short names forms might use', placeholder: 'e.g. CSE, CS' },
   },
   {
     key: 'year', label: 'Year of Study',
@@ -86,6 +88,7 @@ let currentUser = null;
 let profile     = { fields: [] };
 let stepIndex   = 0;
 let answers     = {};   // key → string (yesNo steps: { choice, value })
+let aliases     = {};   // key → string, for steps with an aliases input
 let saving      = false;
 
 function toast(msg) {
@@ -122,6 +125,7 @@ onAuth(async user => {
     } else {
       answers[s.key] = s.prefill ? s.prefill(user, rule) : (rule?.value || '');
     }
+    if (s.aliases) aliases[s.key] = (rule?.choicePatterns || []).join(', ');
   }
   renderStep();
   const p = $('preloader');
@@ -168,11 +172,20 @@ function renderStep() {
       <div class="ob-chips">
         ${s.chips.map(c => `<button type="button" class="ob-chip${a === c ? ' is-active' : ''}" data-chip="${escHtml(c)}">${escHtml(c)}</button>`).join('')}
       </div>` : '';
+    // Dropdowns often list the short form ("CET") — Accord only matches what
+    // the user has written down, so ask for those spellings here.
+    const aliasInput = s.aliases ? `
+      <div class="ob-sub">
+        <p class="ob-sub-label">${escHtml(s.aliases.label)} <span class="ob-sub-optional">optional · comma-separated</span></p>
+        <input class="input ob-input mono" id="ob-aliases" autocomplete="off" autocapitalize="characters"
+               placeholder="${escHtml(s.aliases.placeholder)}" value="${escHtml(aliases[s.key] || '')}" />
+      </div>` : '';
     body = `
       <input class="input ob-input" id="ob-input" type="text" inputmode="${s.type || 'text'}"
              autocomplete="${s.autocomplete || 'off'}" autocapitalize="${s.type ? 'off' : 'words'}"
              placeholder="${escHtml(s.placeholder || '')}" value="${escHtml(a)}" ${s.required ? 'required' : ''} />
       ${chips}
+      ${aliasInput}
       <p class="ob-fills-note">${fills}</p>`;
   }
 
@@ -276,7 +289,11 @@ async function commitStep() {
     if (s.required && !value) { toast('This one we need'); input?.focus(); return; }
     if (s.type === 'email' && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) { toast('That email looks off'); input?.focus(); return; }
     answers[s.key] = value;
-    if (value) upsertRule(s.label, s.patterns, value);
+    const aliasList = s.aliases
+      ? ($('ob-aliases')?.value || '').split(',').map(x => x.trim()).filter(Boolean)
+      : null;
+    if (s.aliases) aliases[s.key] = (aliasList || []).join(', ');
+    if (value) upsertRule(s.label, s.patterns, value, aliasList);
   }
 
   if (stepIndex === STEPS.length - 1) {
@@ -303,15 +320,17 @@ async function commitStep() {
 // Update the rule with this label, or add one. New rules go in *before* the
 // seeded Name rule: Name matches "contains Name", so "College Name" must
 // reach the College rule first (rules fire in profile order).
-function upsertRule(label, patterns, value) {
+function upsertRule(label, patterns, value, choicePatterns = null) {
   const existing = findRule(label);
   if (existing) {
     existing.value = value;
     existing.source = 'value';
     existing.enabled = true;
+    if (choicePatterns) { existing.choicePatterns = choicePatterns; existing.choiceMatch = existing.choiceMatch || 'auto'; }
     return;
   }
-  const rule = { id: nanoid(8), label, match: 'contains', patterns, source: 'value', value, enabled: true, firstOnly: true };
+  const rule = { id: nanoid(8), label, match: 'contains', patterns, source: 'value', value, enabled: true, firstOnly: true,
+                 ...(choicePatterns ? { choiceMatch: 'auto', choicePatterns } : {}) };
   const nameIdx = label === 'Name' ? -1
     : profile.fields.findIndex(f => (f.label || '').toLowerCase() === 'name');
   if (nameIdx >= 0) profile.fields.splice(nameIdx, 0, rule);

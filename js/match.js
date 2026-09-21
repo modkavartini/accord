@@ -73,9 +73,14 @@ export function resolveRule(rule, user) {
   return rule.value || null;
 }
 
-// ─── Smart choice matching ────────────────────────────────────────────────
+// ─── Choice matching ──────────────────────────────────────────────────────
+// Deliberately literal. Accord never guesses that "College of Engineering
+// Trivandrum" is "CET": an option matches only when it equals or contains
+// the saved value or one of the user's own aliases (rule.choicePatterns).
+// The only normalisation is cosmetic — case, punctuation, "&" → "and",
+// filler words, and ordinals ("Third" = "3rd" = "3") — so wording
+// differences never block a match the user clearly intended.
 const STOPWORDS = new Set(['and', 'or', 'of', 'the', 'in', 'for', 'at', 'to', 'a', 'an', 'de']);
-// Ordinals collapse to digits so "Third" ↔ "3rd Year" ↔ "3" all agree.
 const ORDINALS = {
   first: '1', '1st': '1', i: '1',
   second: '2', '2nd': '2', ii: '2',
@@ -93,99 +98,44 @@ function norm(s) {
     .replace(/&/g, ' and ')
     .replace(/[^\p{L}\p{N}]+/gu, ' ')
     .trim()
-    .replace(/\s+/g, ' ');
+    .split(' ')
+    .filter(t => t && !STOPWORDS.has(t))
+    .map(t => ORDINALS[t] || t)
+    .join(' ');
 }
 const compact = s => norm(s).replace(/ /g, '');
-// Significant tokens only: stopwords dropped, ordinals normalized.
-function sigTokens(s) {
-  return norm(s).split(' ').filter(t => t && !STOPWORDS.has(t)).map(t => ORDINALS[t] || t);
-}
-const acronym = s => sigTokens(s).map(t => t[0]).join('');
+// Whole-word phrase containment: "kidangoor" in "college engineering kidangoor ce kgr".
+const hasPhrase = (hay, needle) => ` ${hay} `.includes(` ${needle} `);
 
-// Every acronym formable from a contiguous run of ≥2 significant tokens,
-// mapped to the token indexes it covers. Lets an option token like "ce"
-// stand in for "college engineering" inside a longer value.
-function runAcronyms(toks) {
-  const out = new Map();
-  for (let i = 0; i < toks.length; i++) {
-    let acc = '';
-    for (let j = i; j < toks.length && j < i + 6; j++) {
-      acc += toks[j][0];
-      if (j > i) out.set(acc, [i, j]);
-    }
-  }
-  return out;
-}
-
-// Score how well a form option satisfies a profile value. 0 = no match.
-// `weight(token)` favours tokens that are rare across the option set, so
-// "kidangoor" outranks "college"/"engineering" that every option shares.
-function scoreOption(option, needle, weight) {
+// Score how well a form option satisfies a needle (the value or an alias).
+// 0 = no match. Higher = tighter fit, so a needle that names one option
+// exactly beats one that merely appears inside several.
+function scoreOption(option, needle) {
   const o = norm(option), n = norm(needle);
   if (!o || !n) return 0;
   if (o === n) return 100;
   const oc = compact(option), nc = compact(needle);
   if (oc === nc) return 98;
-  // Whole-string acronym in either direction: value "Computer Science and
-  // Engineering" vs option "CSE", or value "CSE" vs option "Computer Science".
-  const oa = acronym(option), na = acronym(needle);
-  if (oa.length >= 2 && oa === nc) return 92;
-  if (na.length >= 2 && na === oc) return 92;
-  // Whole containment — longer shared portion wins.
-  if (o.includes(n)) return 80 + Math.round(12 * n.length / o.length);
-  if (n.includes(o)) return 70 + Math.round(12 * o.length / n.length);
-  // Compact containment: "CEKGR" inside "…Kidangoor (CE-KGR)". Short needles
-  // only via this route when they're at least 4 chars, or "ce" would hit
-  // every "College of Engineering…".
-  if (nc.length >= 4 && oc.includes(nc)) return 66 + Math.round(12 * nc.length / oc.length);
-
-  // Weighted token coverage with acronym expansion.
-  const ot = sigTokens(option), nt = sigTokens(needle);
-  if (!ot.length || !nt.length) return 0;
-  const nAcr = runAcronyms(nt), oAcr = runAcronyms(ot);
-  const coveredN = new Set(), coveredO = new Set();
-  ot.forEach((t, oi) => {
-    const ni = nt.indexOf(t);
-    if (ni >= 0) { coveredN.add(ni); coveredO.add(oi); return; }
-    const run = nAcr.get(t);           // option token is an acronym of needle tokens
-    if (run) { for (let k = run[0]; k <= run[1]; k++) coveredN.add(k); coveredO.add(oi); }
-  });
-  nt.forEach((t, ni) => {
-    const run = oAcr.get(t);           // needle token is an acronym of option tokens
-    if (run) { for (let k = run[0]; k <= run[1]; k++) coveredO.add(k); coveredN.add(ni); }
-  });
-  if (!coveredN.size) return 0;
-  const w = t => weight ? weight(t) : 1;
-  const sum = (arr, pred) => arr.reduce((a, t, i) => a + (pred(i) ? w(t) : 0), 0);
-  const shared = sum(nt, i => coveredN.has(i)) + sum(ot, i => coveredO.has(i));
-  const total  = sum(nt, () => true)          + sum(ot, () => true);
-  return Math.round(60 * shared / total);
+  // Needle appears whole inside the option — longer shared portion wins.
+  if (hasPhrase(o, n)) return 80 + Math.round(12 * n.length / o.length);
+  // Option appears whole inside the needle ("CSE" option, value "CSE (Computer Science)").
+  if (hasPhrase(n, o)) return 70 + Math.round(12 * o.length / n.length);
+  // Spacing/hyphen variants: "CEKGR" ↔ "(CE-KGR)". Four chars minimum so a
+  // short alias can't hit an accidental substring.
+  if (nc.length >= 4 && oc.includes(nc)) return 60 + Math.round(12 * nc.length / oc.length);
+  return 0;
 }
-
-// Rarity weight for tokens across an option set: a token present in every
-// option carries little signal; a token unique to one option carries a lot.
-function tokenWeighter(options) {
-  const df = new Map();
-  for (const o of options) {
-    for (const t of new Set(sigTokens(o))) df.set(t, (df.get(t) || 0) + 1);
-  }
-  const N = Math.max(options.length, 1);
-  return t => 1 / (1 + (df.get(t) || 0) / N * 3);
-}
-
-const AUTO_THRESHOLD = 30;
 
 /**
  * Pick the option(s) a rule should select on a choice question.
  *
  * Explicit mode (rule.choiceMatch is contains / startsWith / endsWith /
  * equals AND rule.choicePatterns is non-empty): an option matches when ANY
- * pattern matches it under that operator.
+ * alias matches it under that operator.
  *
- * Auto mode (default): score every option against the rule's value plus any
- * choice patterns, and take the best one above a threshold. Handles exact,
- * acronym ("CSE" ↔ "Computer Science and Engineering"), containment and
- * token-overlap matches.
+ * Auto mode (default): the saved value and the rule's aliases are tried in
+ * that order against every option; the tightest literal fit wins. Nothing
+ * is inferred — no acronyms, no fuzzy token overlap.
  *
  * Returns { values: string[], other?: string }. `values` is empty when
  * nothing matched; `other` is set when the question has an "Other…" option
@@ -202,32 +152,14 @@ export function pickChoices(rule, value, field) {
     values = options.filter(o => patterns.some(p => matchStr(mode, o, p)));
     if (!multi) values = values.slice(0, 1);
   } else {
-    const weight = tokenWeighter(options);
-    // Best option for one needle. A needle whose top score is shared by
-    // several options is ambiguous ("CEK" spells both "College Of
-    // Engineering Kalloopara" and "…Karunagappally") and must not decide.
-    const bestFor = needle => {
-      let best = null, score = 0, tied = false;
+    let best = null, bestScore = 0;
+    for (const n of [value, ...patterns].filter(Boolean)) {
       for (const o of options) {
-        const s = scoreOption(o, needle, weight);
-        if (s > score)       { score = s; best = o; tied = false; }
-        else if (s === score && s > 0) tied = true;
+        const s = scoreOption(o, n);
+        if (s > bestScore) { bestScore = s; best = o; }
       }
-      return { best, score, tied };
-    };
-    // The saved value goes first: a confident, unambiguous hit wins outright.
-    // Option words are extra spellings for when the value itself doesn't fit.
-    const primary = value ? bestFor(value) : null;
-    if (primary && primary.score >= 80 && !primary.tied) {
-      values = [primary.best];
-    } else {
-      let best = null, bestScore = 0;
-      for (const n of [value, ...patterns].filter(Boolean)) {
-        const r = bestFor(n);
-        if (!r.tied && r.score > bestScore) { bestScore = r.score; best = r.best; }
-      }
-      if (best && bestScore >= AUTO_THRESHOLD) values = [best];
     }
+    if (best) values = [best];
   }
 
   if (values.length) return { values };

@@ -58,7 +58,7 @@ Load `chrome-extension/` unpacked (see its README). It adds an **Auto-fill with 
 
 ## Profile rules
 
-Each rule matches a question by its label (`contains` / `starts with` / `ends with` / `equals`) and fills a value. For **multiple-choice, dropdown and checkbox** questions Accord picks one of the form's own options: automatically (it understands abbreviations — a value of "Computer Science and Engineering" selects "CSE"), or via explicit *option patterns* on the rule, e.g. option `contains "Kidangoor"`. Short-answer questions always get the value verbatim.
+Each rule matches a question by its label (`contains` / `starts with` / `ends with` / `equals`) and fills a value. For **multiple-choice, dropdown and checkbox** questions Accord picks the option that literally equals or contains the value or one of the rule's *aliases* (`choicePatterns`) — nothing is inferred, so "College of Engineering Trivandrum" never selects "CET" unless the user added "CET" as an alias. Explicit modes (`contains` / `starts with` / …) apply the aliases as operators instead. Short-answer questions always get the value verbatim.
 
 ## Routes
 

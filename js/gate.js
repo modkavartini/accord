@@ -541,7 +541,7 @@ function renderPreview() {
       valueEl.textContent = `No option matches “${p.value}”`;
       const hint = document.createElement('div');
       hint.className = 'preview-hint';
-      hint.textContent = 'Add a choice pattern to this rule in your profile';
+      hint.textContent = 'Add an alias for this option in your profile';
       text.appendChild(hint);
       list.appendChild(li);
       continue;
