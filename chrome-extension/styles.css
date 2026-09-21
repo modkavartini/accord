@@ -45,8 +45,8 @@
 }
 
 .accord-fab-logo {
-  font-family: 'Major Mono Display', 'Courier New', monospace;
-  font-weight: 500;
+  font-family: 'Urbanist', system-ui, sans-serif;
+  font-weight: 700;
   font-size: 20px;
   line-height: 1;
   letter-spacing: -1px;
@@ -98,8 +98,8 @@
 }
 
 .accord-toast-logo {
-  font-family: 'Major Mono Display', 'Courier New', monospace;
-  font-weight: 500;
+  font-family: 'Urbanist', system-ui, sans-serif;
+  font-weight: 700;
   font-size: 22px;
   line-height: 1;
   letter-spacing: -1px;
@@ -193,8 +193,8 @@
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  font-family: 'Major Mono Display', 'Courier New', monospace !important;
-  font-weight: 500 !important;
+  font-family: 'Urbanist', system-ui, sans-serif !important;
+  font-weight: 700 !important;
   font-size: 15px !important;
   line-height: 1 !important;
   letter-spacing: -1px !important;

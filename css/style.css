@@ -240,9 +240,9 @@ nav, main, footer, .modal-overlay { position: relative; z-index: 1; }
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--display);
+  font-family: var(--body);
   font-size: 18px;
-  font-weight: 500;
+  font-weight: 700;
   color: black;
   flex-shrink: 0;
   letter-spacing: -0.04em;
@@ -572,8 +572,8 @@ nav, main, footer, .modal-overlay { position: relative; z-index: 1; }
   pointer-events: none;
 }
 .preloader-mark {
-  font-family: var(--display);
-  font-weight: 500;
+  font-family: var(--body);
+  font-weight: 700;
   font-size: 64px;
   letter-spacing: -0.04em;
   color: rgba(240,240,240,0.85);
@@ -1074,7 +1074,8 @@ nav, main, footer, .modal-overlay { position: relative; z-index: 1; }
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--display);
+  font-family: var(--body);
+  font-weight: 700;
   font-size: 32px;
   font-weight: 500;
   color: black;
