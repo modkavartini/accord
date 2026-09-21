@@ -21,6 +21,8 @@ Step-by-step profile setup: one question per screen (name, email, phone, college
 
 ## Android release builds
 
+Users get the app from the GitHub release: `https://github.com/modkavartini/accord/releases/latest/download/Accord.apk` (the asset is always named `Accord.apk` so that link never changes; the home page's Download button points at it). To publish a new build: bump the version, `assembleRelease`, then create a release tagged `vX.Y` with `app-release.apk` uploaded as `Accord.apk`.
+
 Release builds are signed with the key in `android/keystore.properties` (git-ignored; see `keystore.properties.example`). The keystore lives outside the repo at `~/.android/accord-release.jks` — **back it up**; without it no update can ever be shipped to the same app. Its SHA-1 must be registered in Firebase → Project settings → Android app (then re-download `google-services.json`) or Google Sign-In fails in release builds.
 
 ```
