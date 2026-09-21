@@ -44,7 +44,7 @@
 
   <!-- Footer mono -->
   <text x="600" y="588"
-        font-family="'DM Mono', ui-monospace, monospace"
+        font-family="'Space Mono', ui-monospace, monospace"
         font-weight="400" font-size="16"
         fill="#5a5a5a" text-anchor="middle" letter-spacing="2">
     A C C O R D
