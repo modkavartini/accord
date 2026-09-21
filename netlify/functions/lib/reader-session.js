@@ -143,7 +143,13 @@ async function rotateSession(cookie) {
     body: '[000,"-0000000000000000000"]',
   });
   const merged = await absorb(res, cookie);
-  return { status: res.status, rotated: merged !== cookie, cookie: merged };
+  return { status: res.status, rotated: merged !== cookie, cookie: merged, changed: changedNames(cookie, merged) };
+}
+
+/** Names of cookies whose value differs between two jars — safe to log. */
+function changedNames(a, b) {
+  const ja = parseJar(a), jb = parseJar(b);
+  return [...new Set([...ja.keys(), ...jb.keys()])].filter(k => ja.get(k) !== jb.get(k));
 }
 
 /** Last keepalive outcome, for reader-status. Never includes cookie material. */
@@ -157,4 +163,4 @@ async function loadHealth(event) {
   try { return await store().get('health', { type: 'json' }); } catch { return null; }
 }
 
-module.exports = { loadReaderSession, saveReaderSession, mergeSetCookies, absorb, setCookiesOf, rotateSession, recordHealth, loadHealth };
+module.exports = { loadReaderSession, saveReaderSession, mergeSetCookies, absorb, setCookiesOf, rotateSession, recordHealth, loadHealth, changedNames };

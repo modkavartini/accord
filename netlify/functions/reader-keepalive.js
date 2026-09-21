@@ -5,7 +5,7 @@
 // Netlify runs scheduled functions on production deploys only.
 
 const { schedule } = require('@netlify/functions');
-const { loadReaderSession, absorb, rotateSession, recordHealth } = require('./lib/reader-session');
+const { loadReaderSession, absorb, rotateSession, recordHealth, changedNames } = require('./lib/reader-session');
 
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36';
 const PROBE_URL = 'https://docs.google.com/forms/u/0/';
@@ -26,13 +26,14 @@ const handler = async (event) => {
   }
   const location = res.headers.get('location') || '';
   const signedIn = !(res.status === 401 || /accounts\.google\.com|\/ServiceLogin/.test(location));
-  let rotated = false, rotateStatus = null;
+  let rotated = false, rotateStatus = null, changed = [];
   if (signedIn) {
     const merged = await absorb(res, sent);
+    changed = changedNames(sent, merged);
     // Refresh the session tokens the way the browser would (see lib).
     try {
       const r = await rotateSession(merged);
-      rotated = r.rotated; rotateStatus = r.status;
+      rotated = r.rotated; rotateStatus = r.status; changed = [...new Set([...changed, ...r.changed])];
     } catch (e) {
       console.warn('[reader-keepalive] RotateCookies failed:', e.message);
     }
@@ -40,7 +41,7 @@ const handler = async (event) => {
   } else {
     console.warn(`[reader-keepalive] session rejected (${res.status}) — re-copy the reader cookie`);
   }
-  await recordHealth(event, { signedIn, probeStatus: res.status, rotated, rotateStatus, source: session.source });
+  await recordHealth(event, { signedIn, probeStatus: res.status, rotated, rotateStatus, changed, source: session.source });
   return { statusCode: 200 };
 };
 
