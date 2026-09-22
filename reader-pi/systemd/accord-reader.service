@@ -1,0 +1,18 @@
+[Unit]
+Description=Accord reader (headed Chromium via Xvfb, reads sign-in-walled Google Forms)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/accord-reader
+EnvironmentFile=/home/pi/accord-reader/reader.env
+ExecStart=/usr/bin/xvfb-run -a --server-args="-screen 0 1280x1024x24" /usr/bin/node server.js
+Restart=always
+RestartSec=5
+MemoryHigh=1200M
+MemoryMax=1600M
+
+[Install]
+WantedBy=multi-user.target

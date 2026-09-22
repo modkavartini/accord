@@ -1,0 +1,10 @@
+[Unit]
+Description=Run the Accord reader watchdog periodically
+
+[Timer]
+OnBootSec=90
+OnUnitActiveSec=180
+AccuracySec=15
+
+[Install]
+WantedBy=timers.target

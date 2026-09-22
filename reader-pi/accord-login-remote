@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Headless login: run the reader's Chromium on a virtual display and expose it
+# over noVNC (Tailscale-only) so you can sign in from your own browser.
+# Long-running pieces are nohup'd so they survive this SSH command returning.
+set -e
+PROFILE="$HOME/accord-reader/profile"
+TSIP=$(tailscale ip -4 2>/dev/null | head -1)
+
+echo "Freeing the profile (stopping the service and any leftovers)…"
+sudo systemctl stop accord-reader 2>/dev/null || true
+pkill -f websockify 2>/dev/null || true
+pkill x11vnc 2>/dev/null || true
+pkill -f "chromium.*accord-reader/profile" 2>/dev/null || true
+pkill -f "Xvfb :99" 2>/dev/null || true
+sleep 2
+
+nohup Xvfb :99 -screen 0 1360x900x24 >/tmp/xvfb99.log 2>&1 &
+sleep 2
+DISPLAY=:99 nohup matchbox-window-manager -use_titlebar no >/tmp/mwm.log 2>&1 &
+sleep 1
+DISPLAY=:99 nohup chromium --user-data-dir="$PROFILE" --no-sandbox --no-first-run \
+  --no-default-browser-check --disable-dev-shm-usage --start-maximized \
+  "https://accounts.google.com/ServiceLogin?continue=https%3A%2F%2Fdocs.google.com%2Fforms%2Fu%2F0%2F" \
+  >/tmp/chromium-login.log 2>&1 &
+sleep 3
+x11vnc -display :99 -N -forever -shared -nopw -rfbport 5900 -localhost -bg -o /tmp/x11vnc.log
+nohup websockify --web=/usr/share/novnc "$TSIP:6080" localhost:5900 >/tmp/websockify.log 2>&1 &
+sleep 1
+echo
+echo "=================================================================="
+echo " Open this on any device on your Tailscale network:"
+echo "    http://$TSIP:6080/vnc.html?autoconnect=1&resize=scale"
+echo
+echo " Sign in as the reader Google account. When a Google Forms page is"
+echo " showing, tell Claude 'done' — or run: ~/accord-reader/accord-login-done"
+echo "=================================================================="

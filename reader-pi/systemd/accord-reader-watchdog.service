@@ -1,0 +1,7 @@
+[Unit]
+Description=Accord reader health watchdog
+After=accord-reader.service
+
+[Service]
+Type=oneshot
+ExecStart=/home/pi/accord-reader/accord-reader-watchdog

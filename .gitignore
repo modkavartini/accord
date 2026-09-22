@@ -47,3 +47,6 @@ android/app/debug/
 *.pem
 key.properties
 keystore.properties
+
+# Reader Pi secrets (the token lives in Netlify env + on the Pi, never in git)
+reader-pi/reader.env

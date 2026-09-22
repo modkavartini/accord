@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Tear down the temporary noVNC login view and hand the profile back to the service.
+pkill -f websockify 2>/dev/null || true
+pkill x11vnc 2>/dev/null || true
+pkill -f "chromium.*accord-reader/profile" 2>/dev/null || true
+sleep 2
+pkill -f "Xvfb :99" 2>/dev/null || true
+pkill matchbox-window-manager 2>/dev/null || true
+sudo systemctl restart accord-reader
+sleep 8
+echo "Reader status:"
+curl -s -H "Authorization: Bearer $(grep READER_TOKEN "$HOME/accord-reader/reader.env" | cut -d= -f2)" http://127.0.0.1:8787/health; echo

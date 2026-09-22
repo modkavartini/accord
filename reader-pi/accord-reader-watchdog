@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Restarts the reader only when its HTTP endpoint is actually unresponsive
+# (process wedged/hung). A running-but-signed-out reader still answers /health,
+# so this won't restart-loop on a Google logout — that needs a re-login, not a
+# restart.
+TOKEN=$(grep READER_TOKEN /home/pi/accord-reader/reader.env | cut -d= -f2)
+if curl -fsS -m 15 -H "Authorization: Bearer $TOKEN" http://127.0.0.1:8787/health >/dev/null 2>&1; then
+  exit 0
+fi
+echo "accord-reader /health unresponsive — restarting"
+systemctl restart accord-reader
