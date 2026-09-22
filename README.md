@@ -34,26 +34,41 @@ JAVA_HOME="C:/Program Files/Android/Android Studio/jbr" ./gradlew assembleReleas
 
 Bump `versionCode`/`versionName` in `app/build.gradle` for every upload. A release-signed build won't install over the old debug-signed one — uninstall first.
 
-## Reader account (forms that require Google sign-in)
+## Reader (forms that require Google sign-in)
 
-Forms with file-upload questions, verified email collection or "limit to 1 response" only show their questions to a signed-in Google account, so an anonymous server fetch gets a 401. Accord handles these with a **dedicated Google account** — the *reader* — whose browser session `parse-form` reuses whenever the anonymous fetch is walled. Any signed-in Google account can view such forms unless the owner restricted them to their organisation, so this covers nearly everything; the Chrome extension remains the fallback for org-restricted forms.
+Forms with file-upload questions, verified email collection or "limit to 1 response" only show their questions to a signed-in Google account, so an anonymous server fetch gets a 401. Accord reads these through the **reader**: a persistent, logged-in Chromium running on a Raspberry Pi. When `parse-form` hits a sign-in wall it hands the form to the reader (`lib/reader-remote.js`), which opens it in a real browser and returns the rendered HTML. Any signed-in Google account can view such forms unless the owner restricted them to their organisation, so this covers nearly everything; the Chrome extension remains the fallback for org-restricted forms.
 
-Setup (once, ~5 minutes):
+Why a real browser and not copied cookies: Google only lets the browser that created a session rotate its short-lived gating token, so a cookie header copied into the cloud dies within a couple of hours. A browser that stays running rotates its own session and just keeps working.
 
-1. Create a throwaway Google account (e.g. `accord.reader@gmail.com`). Don't use a personal one — the session cookies end up in a Netlify env var.
-2. In a **new Chrome profile with only that account in it** (not incognito, so the session isn't dropped; not your normal profile — a profile's cookie header is one shared session for *every* account signed in to it), sign in and open any Google Form's `viewform` URL.
-3. DevTools → **Network** → reload → click the top request (host `docs.google.com`) → **Request Headers** → copy the entire value of the `cookie:` header. It must contain `OSID` / `__Secure-OSID` (the docs.google.com session); a header copied from a `google.com` request won't, and `reader-status` will say so.
-4. Store it as `ACCORD_GOOGLE_COOKIE` (scope: Functions) and redeploy:
-   ```
-   netlify env:set ACCORD_GOOGLE_COOKIE "<paste>"
-   netlify deploy --prod --build
-   ```
-5. Check `https://accord-ingly.netlify.app/.netlify/functions/reader-status` → `{"configured":true,"signedIn":true}`.
+### On the Pi
 
-Google rotates session cookies (`SIDCC`, `__Secure-*PSIDCC`, …) on nearly every response and stops honouring old ones after a few days, so the env var is only a *seed*: every reader fetch merges Google's `Set-Cookie` headers into a copy kept in Netlify Blobs (`lib/reader-session.js`), and the scheduled `reader-keepalive` function pings `docs.google.com` every 10 minutes — and rotates the session tokens via RotateCookies the way Chrome does — so the session never expires — the same thing an open browser tab does. Setting a new `ACCORD_GOOGLE_COOKIE` always supersedes the stored copy. **Leave that Chrome profile signed in and never press "Sign out"**. If `reader-status` reports `signedIn:false`, or the gate says *"Accord's reader account session has expired"*, repeat steps 2–4. `parse-form` never logs or echoes the cookie; it is only ever sent to `docs.google.com`, and only after an anonymous fetch has already been refused.
+- `~/accord-reader/server.js` — Node + `playwright-core` driving the system Chromium (`/usr/bin/chromium`) with a persistent profile under `~/accord-reader/profile`. Serves `POST /read {url}` and `GET /health`, both requiring `Authorization: Bearer $READER_TOKEN`, bound to `127.0.0.1:8787`. Only `docs.google.com` / `forms.gle` URLs are allowed (no general fetch proxy).
+- systemd unit `accord-reader.service` runs it headed under Xvfb (`xvfb-run`), `Restart=always`, enabled on boot.
+- Exposed to Netlify via **Tailscale Funnel**: `https://mypi.tail2bd02e.ts.net` → `127.0.0.1:8787` (funnel config persists across reboots).
+- Config in `~/accord-reader/reader.env` (chmod 600): `READER_TOKEN`, `PROFILE_DIR`, `CHROMIUM_PATH`, `PORT`.
 
-The 403 the gate receives carries `reader: "none" | "expired" | "denied"` so it can tell the visitor whether the fix is on your side (set up / refresh the reader) or theirs (org-restricted → use the extension).
+### Netlify env
 
+- `READER_ENDPOINT` = `https://mypi.tail2bd02e.ts.net`
+- `READER_TOKEN` = the shared bearer token (matches the Pi's `reader.env`)
+
+Check `https://accord.modka.is-a.dev/.netlify/functions/reader-status` → `{"configured":true,"signedIn":true}`.
+
+### One-time / occasional login
+
+The reader account must be signed into the service's profile. The Pi is headless, so sign in over a temporary noVNC view:
+
+1. From a terminal (real TTY for the SSH password): `ssh pi@mypi "~/accord-reader/accord-login-remote"`. It prints a `http://<tailscale-ip>:6080/vnc.html…` URL (bound to the Tailscale IP only).
+2. Open that URL on any device on your tailnet, sign in as the reader account until a Google Forms page shows.
+3. Run `ssh pi@mypi "~/accord-reader/accord-login-done"` to tear the view down and restart the service.
+
+If `reader-status` ever shows `signedIn:false`, repeat those steps. `readViaPi` never logs the token; it is only sent to the reader endpoint.
+
+### Caching
+
+Every successful parse is cached per-form in a Netlify Blob (`lib/schema-cache.js`, 7-day TTL) and at Netlify's edge (`s-maxage`), keyed by form ID. The first visitor to a form pays the parse cost (and, for walled forms, the Pi round-trip); everyone after — on any device — gets it in a fraction of a second, and the reader isn't hit again for that form. The gate's `form_schemas` write is a third, cross-user layer on top.
+
+The 403 the gate receives carries `reader: "none" | "expired" | "denied"` so it can tell the visitor whether the fix is on the owner's side (reader not set up / offline) or theirs (org-restricted → use the extension).
 ## Chrome extension
 
 Load `chrome-extension/` unpacked (see its README). It adds an **Auto-fill with Accord** button to every Google Form and reads the questions straight from your signed-in browser — the fallback for forms that even the reader account can't view (restricted to an organisation). Accord remembers the form for everyone after that.
