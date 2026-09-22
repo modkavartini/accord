@@ -3,12 +3,12 @@
 // Lets Accord prefill any form on first visit, no creator setup required.
 //
 // Forms that require Google sign-in (file-upload questions, "restrict to
-// org", verified email collection) return 401 to an anonymous fetch. For
-// those we retry with the session cookies of a dedicated Google account —
-// the "Accord reader" — stored in ACCORD_GOOGLE_COOKIE (see README §Reader
-// account). Google Forms are readable by *any* signed-in account unless the
-// owner restricted them to their organisation, so this covers nearly every
-// sign-in-walled form without anyone having to teach it via the extension.
+// org", verified email collection) return 401 to an anonymous fetch. Those
+// are handed to the Accord reader — a persistent, signed-in Chromium on a Pi
+// (see lib/reader-remote) — which opens them in a real browser. Google Forms
+// are readable by *any* signed-in account unless the owner restricted them to
+// their organisation, so this covers nearly every sign-in-walled form without
+// anyone having to teach it via the extension.
 
 const FORMS_HOSTS = new Set(['docs.google.com', 'forms.gle']);
 // Common URL shorteners. We follow them server-side, then verify the final
@@ -36,10 +36,12 @@ const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
 // Pre-accept Google's cookie consent so the form page isn't replaced by a
 // consent.google.com interstitial on cookieless server-side fetches.
 const CONSENT_COOKIE = 'CONSENT=YES+; SOCS=CAI';
-// The Accord reader account's browser session — seeded from
-// ACCORD_GOOGLE_COOKIE and kept fresh in a Netlify Blob (see lib/reader-session).
-// Never logged, never echoed — only ever sent to docs.google.com.
-const { loadReaderSession, absorb } = require('./lib/reader-session');
+// Sign-in-walled forms are read by the Accord reader — a persistent, logged-in
+// Chromium on a Pi (see lib/reader-remote and the reader service). Successful
+// parses are cached per-form so the first visitor pays the cost and everyone
+// after is instant.
+const { readViaPi } = require('./lib/reader-remote');
+const { getCachedSchema, putCachedSchema } = require('./lib/schema-cache');
 
 const SIGNIN_ERROR = 'This form requires Google sign-in';
 
@@ -64,28 +66,31 @@ exports.handler = async (event) => {
     }
   }
 
+  // Fast path: if we can name the form up front (bare id or a /d/e/ URL — the
+  // shapes /go/<id> produces), serve a cached schema without touching Google.
+  const preId = extractFormId(new URL(formUrl).pathname);
+  if (preId) {
+    const cached = await getCachedSchema(event, preId);
+    if (cached) return json(200, cached);
+  }
+
   // Pass 1: anonymous. Public forms (the vast majority) resolve here and the
-  // reader account's session never touches the request.
+  // reader never touches the request.
   let page = await fetchFormPage(formUrl, CONSENT_COOKIE);
   if (page.error) return json(502, { error: 'Could not reach the form' });
   let requiresSignIn = false;
 
   if (page.kind === 'signin') {
     requiresSignIn = true;
-    // Pass 2: the same URL as the Accord reader account. Google's 401 lands
-    // on the canonical form URL (shorteners already followed), so retry
-    // that rather than re-walking the redirect chain.
-    const session = await loadReaderSession(event);
-    if (!session.cookie) {
-      return signInResponse(page.formUrl, 'none');
-    }
-    const sent = `${CONSENT_COOKIE}; ${session.cookie}`;
-    page = await fetchFormPage(page.formUrl || formUrl, sent);
-    if (page.error) return json(502, { error: 'Could not reach the form' });
-    // Google rotates session cookies on every response — keep ours current.
-    if (page.res && page.kind !== 'signin') await absorb(page.res, sent);
-    // Still bounced to accounts.google.com → the stored session is dead.
-    if (page.kind === 'signin') return signInResponse(page.formUrl, 'expired');
+    // Hand the walled form to the reader Pi, which opens it in a real
+    // signed-in browser and returns the rendered HTML.
+    const pi = await readViaPi(page.formUrl || formUrl);
+    if (!pi.configured)              return signInResponse(page.formUrl, 'none');     // no reader set up
+    if (!pi.ok || !pi.html)          return signInResponse(page.formUrl, 'expired');  // reader offline
+    if (!pi.signedIn)                return signInResponse(page.formUrl, 'expired');  // reader logged out
+    let finalUrl;
+    try { finalUrl = new URL(pi.finalUrl || page.formUrl || formUrl); } catch { finalUrl = new URL(formUrl); }
+    page = { kind: 'ok', finalUrl, html: pi.html, formUrl: page.formUrl };
   }
 
   if (page.kind === 'consent') {
@@ -133,16 +138,18 @@ exports.handler = async (event) => {
 
   if (!fields.length) return json(422, { error: 'No prefillable fields detected' });
 
-  return json(200, {
+  const payload = {
     formId,
     formUrl: page.formUrl,
     formTitle: extractTitle(html, data),
     fields,
-    // Tell the gate this schema came through the reader account so it can
-    // remember the form is sign-in-walled (the visitor still has to be signed
-    // in to Google when they land on it — prefill itself works the same).
+    // Read through the reader Pi → the visitor still needs to be signed in to
+    // Google when they land on it, but prefill itself works the same.
     ...(requiresSignIn ? { requiresSignIn: true, readVia: 'reader' } : {}),
-  });
+  };
+  // Cache for the next visitor (first one paid the cost / the Pi round-trip).
+  await putCachedSchema(event, formId, payload);
+  return json(200, payload);
 };
 
 // Fetch a form page and classify where we ended up. Returns one of
@@ -197,10 +204,10 @@ function looksLikePermissionWall(html) {
       || /<title[^>]*>[^<]*sign[- ]in[^<]*<\/title>/i.test(html);
 }
 
-// 403 for a form we couldn't read even as the reader account. `reader` tells
-// the gate which situation it is so it can show the right fix:
-//   none    — no ACCORD_GOOGLE_COOKIE configured on this deploy
-//   expired — the reader session was rejected by Google (needs re-copying)
+// 403 for a form we couldn't read even through the reader. `reader` tells the
+// gate which situation it is so it can show the right fix:
+//   none    — no reader configured on this deploy (READER_ENDPOINT unset)
+//   expired — the reader is offline or signed out (owner needs to check it)
 //   denied  — reader is signed in but the form is restricted to an org
 function signInResponse(formUrl, reader) {
   const detail = {
@@ -315,10 +322,9 @@ function json(statusCode, body) {
   // /go/<formId> skip the 500-1500ms Google fetch entirely. Browsers stay
   // on no-store so a user can paste the same link into /fill and see fresh
   // status while the next visitor still gets the warm edge response.
-  // Skip caching for 5xx (transient errors) and 502 (rate limits) where
-  // we want the next request to retry. Sign-in walls that only exist
-  // because the reader account is missing/expired get a short TTL so a
-  // fixed ACCORD_GOOGLE_COOKIE takes effect within minutes, not an hour.
+  // Skip caching for 5xx (transient errors) where we want the next request to
+  // retry. Sign-in walls that exist only because the reader is missing/offline
+  // get a short TTL so fixing the reader takes effect within minutes, not an hour.
   const shortLived = statusCode === 403 && body.reader !== 'denied';
   const cacheable = statusCode === 200 || statusCode === 403 || statusCode === 422;
   return {
