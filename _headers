@@ -2,3 +2,8 @@
 # default (max-age=0, must-revalidate) so a deploy is live immediately.
 /public/*
   Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+
+# The Android app's update manifest — keep it short-lived so a new release is
+# picked up promptly by the in-app updater.
+/app-release.json
+  Cache-Control: public, max-age=300

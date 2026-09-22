@@ -43,12 +43,15 @@
             android:orientation="vertical"
             android:gravity="center_horizontal">
 
+            <!-- Brand mark. Uses the bundled Cormorant Garamond italic (the same
+                 face as the launcher/splash logo) rather than the system serif,
+                 which rendered a generic slanted "a." that didn't match. The
+                 font file is already italic, so no textStyle is set. -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="a."
-                android:fontFamily="serif"
-                android:textStyle="italic"
+                android:fontFamily="@font/cormorant_garamond_italic"
                 android:textSize="64sp"
                 android:textColor="#D9F0F0F0"
                 android:includeFontPadding="false" />

@@ -100,6 +100,10 @@ class MainActivity : AppCompatActivity() {
         renderState()
         consumePendingFormIntent()
         warmWebView()
+
+        // Quiet, throttled self-update check. Prompts only when a newer build is
+        // published and the user hasn't skipped it; a manual check lives in Settings.
+        UpdateUi.check(this, force = false)
     }
 
     /**

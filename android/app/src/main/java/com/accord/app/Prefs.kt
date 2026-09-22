@@ -14,6 +14,8 @@ object Prefs {
 
     private const val KEY_OPEN_IN_APP = "open_forms_in_app"
     private const val KEY_PENDING_FORM_ID = "pending_form_id"
+    private const val KEY_LAST_UPDATE_CHECK = "last_update_check"
+    private const val KEY_SKIPPED_UPDATE = "skipped_update_version"
 
     private fun settings(ctx: Context): SharedPreferences =
         ctx.getSharedPreferences(SETTINGS, Context.MODE_PRIVATE)
@@ -42,5 +44,24 @@ object Prefs {
             if (formId == null) remove(KEY_PENDING_FORM_ID)
             else                putString(KEY_PENDING_FORM_ID, formId)
         }.apply()
+    }
+
+    // ─── Self-updater bookkeeping ───────────────────────────────────────────
+
+    /** Wall-clock millis of the last update check; 0 if never. Throttles checks. */
+    fun lastUpdateCheck(ctx: Context): Long =
+        state(ctx).getLong(KEY_LAST_UPDATE_CHECK, 0L)
+
+    fun setLastUpdateCheck(ctx: Context, whenMs: Long) {
+        state(ctx).edit().putLong(KEY_LAST_UPDATE_CHECK, whenMs).apply()
+    }
+
+    /** versionCode the user chose to skip; -1 if none. Auto-prompt honours it; a
+     *  forced (Settings) check ignores it. */
+    fun skippedUpdateVersion(ctx: Context): Int =
+        state(ctx).getInt(KEY_SKIPPED_UPDATE, -1)
+
+    fun setSkippedUpdateVersion(ctx: Context, versionCode: Int) {
+        state(ctx).edit().putInt(KEY_SKIPPED_UPDATE, versionCode).apply()
     }
 }

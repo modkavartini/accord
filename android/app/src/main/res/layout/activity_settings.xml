@@ -83,6 +83,56 @@
                     android:layout_marginStart="12dp" />
             </LinearLayout>
 
+            <!-- Updates -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/setup_card_bg"
+                android:padding="20dp"
+                android:layout_marginTop="14dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/check_for_updates"
+                        android:textColor="#F0F0F0"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/versionLabel"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColor="#80F0F0F0"
+                        android:textSize="12sp"
+                        android:layout_marginTop="6dp" />
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/checkUpdatesBtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/check_for_updates"
+                    android:textColor="#080808"
+                    android:textAllCaps="false"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:background="@drawable/btn_primary"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="9dp"
+                    android:stateListAnimator="@null"
+                    android:elevation="0dp"
+                    android:layout_marginStart="12dp" />
+            </LinearLayout>
+
         </LinearLayout>
     </ScrollView>
 </LinearLayout>

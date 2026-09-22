@@ -19,4 +19,18 @@
     <string name="loading_title">Fetching your saved answers…</string>
     <string name="proceed_without_accord">Proceed to form without Accord</string>
     <string name="proceed_without_accord_hint">Opens the plain Google Form — nothing gets auto-filled.</string>
+
+    <!-- Self-updater -->
+    <string name="update_available_title">Update available</string>
+    <string name="update_available_body">Accord %1$s is ready to install.</string>
+    <string name="update_now">Update</string>
+    <string name="update_later">Later</string>
+    <string name="update_skip">Skip this version</string>
+    <string name="update_downloading_title">Updating Accord</string>
+    <string name="update_downloading_body">Downloading %1$s… %2$d%%</string>
+    <string name="update_needs_permission">Allow Accord to install apps, then tap Update again.</string>
+    <string name="update_failed">Update download failed. Try again from Settings.</string>
+    <string name="update_up_to_date">You\'re on the latest version.</string>
+    <string name="check_for_updates">Check for updates</string>
+    <string name="current_version">Version %1$s</string>
 </resources>

@@ -34,6 +34,25 @@ JAVA_HOME="C:/Program Files/Android/Android Studio/jbr" ./gradlew assembleReleas
 
 Bump `versionCode`/`versionName` in `app/build.gradle` for every upload. A release-signed build won't install over the old debug-signed one — uninstall first.
 
+### In-app updates (OTA)
+
+From v1.3 the app updates itself instead of making users hunt down the APK. On
+launch (throttled to once every 6h) and from **Settings → Check for updates**, it
+reads `app-release.json` at the site root and, if that `versionCode` is higher
+than the installed build, offers to download the release APK and hand it to the
+system installer (`AppUpdater.kt` / `UpdateUi.kt`). Android still shows its own
+install prompt — a sideloaded app can't install silently — and the download must
+be **signed with the same release key**, so this only updates release builds over
+release builds. `apkUrl` points at `releases/latest/download/Accord.apk`, so it
+never changes between versions.
+
+**Every release must bump two things together:** `versionCode`/`versionName` in
+`app/build.gradle` *and* `app-release.json` (`versionCode`, `versionName`,
+`notes`). Publish the GitHub release first (so `Accord.apk` exists at the URL),
+then deploy the site with the matching `app-release.json`. Because only v1.3+
+carries the updater, users still on ≤ v1.2 upgrade to v1.3 manually once; every
+release after that is picked up in-app.
+
 ## Reader (forms that require Google sign-in)
 
 Forms with file-upload questions, verified email collection or "limit to 1 response" only show their questions to a signed-in Google account, so an anonymous server fetch gets a 401. Accord reads these through the **reader**: a persistent, logged-in Chromium running on a Raspberry Pi. When `parse-form` hits a sign-in wall it hands the form to the reader (`lib/reader-remote.js`), which opens it in a real browser and returns the rendered HTML. Any signed-in Google account can view such forms unless the owner restricted them to their organisation, so this covers nearly everything; the Chrome extension remains the fallback for org-restricted forms.

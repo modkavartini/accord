@@ -1,7 +1,9 @@
 package com.accord.app
 
 import android.os.Bundle
+import android.widget.Button
 import android.widget.ImageButton
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
 
@@ -17,6 +19,12 @@ class SettingsActivity : AppCompatActivity() {
         openInAppSwitch.isChecked = Prefs.openFormsInApp(this)
         openInAppSwitch.setOnCheckedChangeListener { _, isChecked ->
             Prefs.setOpenFormsInApp(this, isChecked)
+        }
+
+        findViewById<TextView>(R.id.versionLabel).text =
+            getString(R.string.current_version, BuildConfig.VERSION_NAME)
+        findViewById<Button>(R.id.checkUpdatesBtn).setOnClickListener {
+            UpdateUi.check(this, force = true)
         }
     }
 }
