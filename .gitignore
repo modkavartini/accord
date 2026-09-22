@@ -50,3 +50,6 @@ keystore.properties
 
 # Reader Pi secrets (the token lives in Netlify env + on the Pi, never in git)
 reader-pi/reader.env
+
+# Chrome extension build output
+chrome-extension/dist/

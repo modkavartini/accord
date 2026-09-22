@@ -12,7 +12,13 @@
 //      question that Accord prefilled and stamp it with an "a." badge.
 
 (() => {
-  console.log('[accord-ext] content script loaded', {
+  // Flip to true when debugging; ships false so a normal Google Form visit
+  // doesn't spam the page console. All internal logging goes through log()/warn().
+  const DEBUG = false;
+  const log  = DEBUG ? console.log.bind(console)  : () => {};
+  const warn = DEBUG ? console.warn.bind(console) : () => {};
+
+  log('[accord-ext] content script loaded', {
     url: window.location.href,
     referrer: document.referrer,
     readyState: document.readyState,
@@ -206,14 +212,14 @@
   // ─── Mode A: inject the auto-fill button ───────────────────────────────
   function launchGate(formId) {
     let schema = null;
-    try { schema = extractSchema(formId); } catch (e) { console.warn('[accord-ext] schema read failed', e); }
-    console.log('[accord-ext] launching gate', { formId, fields: schema?.fields?.length ?? 0 });
+    try { schema = extractSchema(formId); } catch (e) { warn('[accord-ext] schema read failed', e); }
+    log('[accord-ext] launching gate', { formId, fields: schema?.fields?.length ?? 0 });
     chrome.runtime.sendMessage({
       type: 'accord:open-gate',
       formId,
       schema: schema ? encodeSchema(schema) : null,
     }, (res) => {
-      if (!res?.ok) console.warn('[accord-ext] open-gate failed', res);
+      if (!res?.ok) warn('[accord-ext] open-gate failed', res);
     });
   }
 
@@ -245,12 +251,32 @@
     document.body.appendChild(btn);
   }
 
+  // A /forms/d/e/<id>/viewform URL isn't always a form: Google serves the same
+  // path shape for "you need permission", "form not accepting responses", and
+  // Drive's TOS-violation error page. Those have neither the FB_PUBLIC_LOAD_DATA_
+  // inline blob nor rendered questions. Gate the button on real form content so
+  // it never appears on a dead/blocked page (where it'd do nothing useful).
+  function hasFormContent() {
+    for (const s of document.scripts) {
+      if (!s.src && s.textContent && s.textContent.includes('FB_PUBLIC_LOAD_DATA_')) return true;
+    }
+    return !!document.querySelector('[role="listitem"], [data-params]');
+  }
+
   function runLaunchMode(formId) {
     // If we just came back from the gate but no entry.X params landed (no
     // matching profile rules, all fields toggled off in the preview, etc.),
     // re-showing the button would invite the user into a loop. Skip.
     if (cameFromGate()) return;
-    injectButton(formId);
+    if (hasFormContent()) { injectButton(formId); return; }
+    // Real forms embed FB_PUBLIC_LOAD_DATA_ in the initial HTML, so the check
+    // above usually passes immediately. Watch briefly in case content mounts
+    // late; if nothing form-like appears, this isn't a form — no button.
+    const obs = new MutationObserver(() => {
+      if (hasFormContent()) { obs.disconnect(); injectButton(formId); }
+    });
+    obs.observe(document.documentElement, { subtree: true, childList: true });
+    setTimeout(() => obs.disconnect(), 4000);
   }
 
   // ─── Mode B: highlight prefilled fields ────────────────────────────────
@@ -322,7 +348,7 @@
       const wasNew = markContainer(container);
       if (wasNew) {
         marked++;
-        console.log('[accord-ext] marked via data-params:', {
+        log('[accord-ext] marked via data-params:', {
           entryIds: ids,
           containerClass: container.className,
           role: container.getAttribute('role'),
@@ -343,7 +369,7 @@
         const container = findQuestionContainer(node);
         if (markContainer(container)) {
           marked++;
-          console.log('[accord-ext] marked via name attr:', entryId, container.className);
+          log('[accord-ext] marked via name attr:', entryId, container.className);
         }
       }
     }
@@ -378,7 +404,7 @@
       parseEntryIdsFromDataParams(el.getAttribute('data-params')).forEach(id => allEntryIdsInDom.add(id));
     }
     const missingInDom = entryIds.filter(id => !allEntryIdsInDom.has(id));
-    console.log('[accord-ext] highlight mode', {
+    log('[accord-ext] highlight mode', {
       url: window.location.href,
       urlEntryIds: entryIds,
       domEntryIds: Array.from(allEntryIdsInDom),
@@ -387,7 +413,7 @@
       dataParamsEls: dataParamsEls.length,
     });
     if (missingInDom.length === entryIds.length && dataParamsEls.length > 0) {
-      console.warn('[accord-ext] NONE of the URL entry IDs match any data-params in the DOM. The URL was prefilled but the form\'s questions use different entry IDs — check if the gate sent the right entries.');
+      warn('[accord-ext] NONE of the URL entry IDs match any data-params in the DOM. The URL was prefilled but the form\'s questions use different entry IDs — check if the gate sent the right entries.');
     }
 
     if (!toastedUrls.has(window.location.href)) {
@@ -416,9 +442,9 @@
     const formId = extractFormId();
     const prefill = getPrefillEntries();
     const fromGate = cameFromGate();
-    console.log('[accord-ext] init', { formId, prefill, fromGate, url: window.location.href });
+    log('[accord-ext] init', { formId, prefill, fromGate, url: window.location.href });
     if (!formId) {
-      console.log('[accord-ext] no formId → bail (URL not a /viewform path)');
+      log('[accord-ext] no formId → bail (URL not a /viewform path)');
       return;
     }
     if (prefill.length) {
@@ -426,7 +452,7 @@
       return;
     }
     if (fromGate) {
-      console.log('[accord-ext] came from gate with no prefill → bail (loop guard)');
+      log('[accord-ext] came from gate with no prefill → bail (loop guard)');
       return;
     }
     runLaunchMode(formId);

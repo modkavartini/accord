@@ -1,3 +1,26 @@
+/* Brand fonts, bundled. docs.google.com ships a strict CSP, so a content
+   script can't pull these from Google Fonts — the font files must live inside
+   the extension and be declared as web_accessible_resources (see manifest).
+   Unique family names ('AccordUrbanist' / 'AccordMark') guarantee our bundled
+   files are used and never collide with a same-named font the user happens to
+   have installed locally.
+   - Urbanist: one variable woff2 covering weights 500–600 (pill + toast text).
+   - AccordMark: Cormorant Garamond italic 500, subset to just the "a." mark. */
+@font-face {
+  font-family: 'AccordUrbanist';
+  font-style: normal;
+  font-weight: 500 600;
+  font-display: swap;
+  src: url('fonts/urbanist-latin.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'AccordMark';
+  font-style: italic;
+  font-weight: 500;
+  font-display: swap;
+  src: url('fonts/cormorant-mark.woff2') format('woff2');
+}
+
 /* Floating action button — pinned to the top-right corner of the viewport.
    Sits outside the Google Forms card on desktop (centered form leaves empty
    gutters on either side) so it never overlaps the form's own UI. */
@@ -15,7 +38,7 @@
   color: #f0f0f0;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 999px;
-  font-family: 'Urbanist', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'AccordUrbanist', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.01em;
@@ -45,7 +68,7 @@
 }
 
 .accord-fab-logo {
-  font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  font-family: 'AccordMark', Georgia, 'Times New Roman', serif;
   font-style: italic;
   font-weight: 500;
   font-size: 20px;
@@ -87,7 +110,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  font-family: 'Urbanist', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'AccordUrbanist', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   font-size: 14px;
   font-weight: 500;
   letter-spacing: 0.01em;
@@ -99,7 +122,7 @@
 }
 
 .accord-toast-logo {
-  font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  font-family: 'AccordMark', Georgia, 'Times New Roman', serif;
   font-style: italic;
   font-weight: 500;
   font-size: 22px;
@@ -195,7 +218,7 @@
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif !important;
+  font-family: 'AccordMark', Georgia, 'Times New Roman', serif !important;
   font-style: italic !important;
   font-weight: 500 !important;
   font-size: 15px !important;

@@ -29,8 +29,25 @@ auto-fill at `/go/<formId>` too.
 - `manifest.json` — MV3 manifest, content script on `docs.google.com/forms/*`
 - `background.js` — service worker; opens the gate tab on button click
 - `content.js` — button injection, form-schema extraction, post-prefill highlighting
-- `styles.css` — button + highlight + badge styles
-- `icons/icon.png` — reuses `public/favicon.png` (256×256)
+- `styles.css` — button + highlight + badge styles; bundles the brand fonts via
+  `@font-face` (see below)
+- `fonts/` — `urbanist-latin.woff2` (pill + toast text) and `cormorant-mark.woff2`
+  (the italic "a." mark, subset to just those glyphs). Bundled because
+  `docs.google.com`'s CSP blocks a content script from loading Google Fonts;
+  declared as `web_accessible_resources` so the page may fetch them.
+- `icons/icon{16,48,128}.png` — toolbar/store icons, from `public/favicon.png`.
+  `icon256.png` is the store-listing icon (not shipped in the zip).
+
+## Packaging for the Chrome Web Store
+
+Run `bash pack.sh` → produces `dist/accord-extension-<version>.zip` containing only
+the files the extension ships (no docs, no 256px icon). Upload that in the
+Developer Dashboard. Listing copy, permission justifications and the privacy-tab
+answers are in `STORE.md`; the hosted privacy policy is `extension-privacy.html`
+at the repo root (served at `/extension-privacy`).
+
+Set `DEBUG = true` at the top of `content.js` to re-enable console logging while
+developing; it ships `false` so a normal form visit leaves the page console clean.
 
 ## How it decides what to do
 

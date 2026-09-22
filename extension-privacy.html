@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Accord — Chrome extension privacy</title>
+  <meta name="description" content="What the Accord for Google Forms Chrome extension does and does not do with your data." />
+  <meta name="theme-color" content="#080808" />
+  <meta name="robots" content="index" />
+  <link rel="icon" type="image/svg+xml" href="public/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,500&family=Major+Mono+Display&family=Urbanist:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" />
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #080808;
+      color: #f0f0f0;
+      font-family: 'Urbanist', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      font-weight: 300;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrap { max-width: 760px; margin: 0 auto; padding: 72px 24px 96px; }
+    .logo {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-style: italic; font-weight: 500; font-size: 34px;
+      letter-spacing: -1px; color: #f0f0f0; text-decoration: none;
+      display: inline-block; margin-bottom: 40px;
+    }
+    h1 {
+      font-family: 'Major Mono Display', monospace;
+      font-weight: 400; font-size: clamp(24px, 5vw, 34px);
+      letter-spacing: -0.01em; line-height: 1.15; margin-bottom: 10px;
+    }
+    .updated { font-family: 'Space Mono', monospace; font-size: 12px; color: rgba(240,240,240,0.4); margin-bottom: 44px; }
+    h2 {
+      font-family: 'Major Mono Display', monospace;
+      font-weight: 400; font-size: 15px; letter-spacing: 0.02em;
+      color: #f0f0f0; margin: 40px 0 12px;
+    }
+    p { color: rgba(240,240,240,0.72); margin-bottom: 14px; font-size: 15.5px; }
+    ul { list-style: none; margin: 0 0 14px; }
+    li { color: rgba(240,240,240,0.72); font-size: 15.5px; padding-left: 20px; position: relative; margin-bottom: 9px; }
+    li::before { content: '·'; position: absolute; left: 4px; color: rgba(240,240,240,0.4); }
+    strong { color: #f0f0f0; font-weight: 600; }
+    code { font-family: 'Space Mono', monospace; font-size: 12.5px; color: #ffde59; background: rgba(255,255,255,0.05); padding: 1px 6px; border-radius: 5px; }
+    a { color: #f0f0f0; text-decoration: underline; text-underline-offset: 3px; }
+    .callout {
+      border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;
+      padding: 18px 20px; margin: 24px 0; background: rgba(255,255,255,0.02);
+    }
+    .callout p:last-child { margin-bottom: 0; }
+    footer { margin-top: 56px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.08); font-family: 'Space Mono', monospace; font-size: 12px; color: rgba(240,240,240,0.4); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="logo" href="/">a.</a>
+    <h1>extension privacy</h1>
+    <div class="updated">Accord for Google Forms · updated 23 Sep 2026</div>
+
+    <p>
+      <strong>Accord for Google Forms</strong> is a Chrome extension that adds an
+      “Auto-fill with Accord” button to Google Forms. This page explains exactly
+      what it touches. The short version: it holds no account, stores nothing about
+      you, and adds no tracking.
+    </p>
+
+    <div class="callout">
+      <p><strong>No data is collected by the extension.</strong> It has no analytics,
+      no remote logging, and no background data collection. It requests no browser
+      permissions beyond running on <code>docs.google.com/forms</code> pages.</p>
+    </div>
+
+    <h2>what it accesses</h2>
+    <ul>
+      <li>On a Google Form page, it reads the <strong>form's public question
+        definition</strong> (question labels, types and choice options) — the same
+        data the form already sends to your browser to render itself.</li>
+      <li>It reads the page URL to tell a form from the Accord return link, and to
+        highlight the questions Accord prefilled.</li>
+    </ul>
+    <p>It does <strong>not</strong> read your answers, your Google account
+      credentials, other tabs, your browsing history, or any page that isn't a
+      Google Form.</p>
+
+    <h2>what leaves your browser</h2>
+    <p>
+      When you click “Auto-fill with Accord”, the form's question definition is
+      passed to the Accord web app (<code>accord-ingly.netlify.app</code>) so it can
+      build your prefilled link. It travels in the new tab's URL fragment (the part
+      after <code>#</code>), which browsers never send over the network — the Accord
+      page reads it locally.
+    </p>
+    <p>
+      Your name, email and saved answers live in your Accord profile and are applied
+      by the Accord web app, not by the extension. How Accord handles that is
+      covered by <a href="/">the main Accord site</a>. The extension itself sends
+      nothing to any server.
+    </p>
+
+    <h2>form caching</h2>
+    <p>
+      So the next person to open the same form doesn't wait, Accord may cache a
+      form's <em>question structure</em> (never anyone's answers), keyed by the
+      form's ID. This happens on Accord's side, not in the extension.
+    </p>
+
+    <h2>permissions</h2>
+    <p>
+      The extension runs a content script only on <code>https://docs.google.com/forms/*</code>.
+      It declares no <code>tabs</code>, <code>storage</code>, <code>cookies</code>,
+      history or “all sites” permissions.
+    </p>
+
+    <h2>contact</h2>
+    <p>
+      Questions or issues:
+      <a href="https://github.com/modkavartini/accord/issues">open an issue on GitHub</a>.
+      The full source of the extension is in that repository under
+      <code>chrome-extension/</code>.
+    </p>
+
+    <footer>Accord · a. — forms that know who you are</footer>
+  </div>
+</body>
+</html>
