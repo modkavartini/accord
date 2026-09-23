@@ -416,7 +416,7 @@
           </p>
           <div class="android-cta">
             <a class="btn btn-primary" href="https://github.com/modkavartini/accord/releases/latest/download/Accord.apk">Download APK</a>
-            <span class="android-meta">v1.2 · 1.6 MB</span>
+            <span class="android-meta" id="apkMeta">v1.3 · 1.6 MB</span>
           </div>
         </div>
         <ul class="android-list">
@@ -557,6 +557,25 @@
 
     // Safety: hide preloader after 1.5s even if auth never resolves
     setTimeout(hidePreloader, 1500);
+  </script>
+  <script>
+    // Keep the APK version/size label in sync with the latest GitHub release.
+    (async () => {
+      const el = document.getElementById('apkMeta');
+      if (!el) return;
+      try {
+        const r = await fetch('https://api.github.com/repos/modkavartini/accord/releases/latest', {
+          headers: { 'Accept': 'application/vnd.github+json' }
+        });
+        if (!r.ok) return;
+        const rel = await r.json();
+        const apk = (rel.assets || []).find(a => a.name === 'Accord.apk') || (rel.assets || [])[0];
+        const parts = [];
+        if (rel.tag_name) parts.push(rel.tag_name.startsWith('v') ? rel.tag_name : 'v' + rel.tag_name);
+        if (apk && apk.size) parts.push((apk.size / 1048576).toFixed(1) + ' MB');
+        if (parts.length) el.textContent = parts.join(' · ');
+      } catch (e) { /* keep the static fallback */ }
+    })();
   </script>
 </body>
 </html>
