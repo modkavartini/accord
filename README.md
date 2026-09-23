@@ -21,7 +21,9 @@ Step-by-step profile setup: one question per screen (name, email, phone, college
 
 ## Android release builds
 
-Users get the app from the GitHub release: `https://github.com/modkavartini/accord/releases/latest/download/Accord.apk` (the asset is always named `Accord.apk` so that link never changes; the home page's Download button points at it). To publish a new build: bump the version, `assembleRelease`, then create a release tagged `vX.Y` with `app-release.apk` uploaded as `Accord.apk`.
+The canonical release asset lives on GitHub: `https://github.com/modkavartini/accord/releases/latest/download/Accord.apk` (always named `Accord.apk`, so that link never changes). The **site** does not link there directly, though: at deploy time Netlify fetches that APK into `download/Accord.apk` and serves it from our own origin as `/download/Accord.apk` (`application/octet-stream`; see `netlify.toml`, `_headers`). This avoids GitHub's short-lived cross-origin signed redirect, which leaves some Android download managers (Nothing OS among them) stuck at 100%. If the build-time fetch ever fails, `_redirects` falls back to a GitHub redirect. The home page's Download buttons and `app-release.json`'s `apkUrl` both point at `/download/Accord.apk`.
+
+To publish a new build: bump the version, `assembleRelease`, then create a release tagged `vX.Y` with `app-release.apk` uploaded as `Accord.apk`.
 
 Release builds are signed with the key in `android/keystore.properties` (git-ignored; see `keystore.properties.example`). The keystore lives outside the repo at `~/.android/accord-release.jks` — **back it up**; without it no update can ever be shipped to the same app. Its SHA-1 must be registered in Firebase → Project settings → Android app (then re-download `google-services.json`) or Google Sign-In fails in release builds.
 
@@ -43,13 +45,14 @@ than the installed build, offers to download the release APK and hand it to the
 system installer (`AppUpdater.kt` / `UpdateUi.kt`). Android still shows its own
 install prompt — a sideloaded app can't install silently — and the download must
 be **signed with the same release key**, so this only updates release builds over
-release builds. `apkUrl` points at `releases/latest/download/Accord.apk`, so it
-never changes between versions.
+release builds. `apkUrl` points at `/download/Accord.apk` (the same-origin file
+Netlify fetches at deploy time), so it never changes between versions.
 
 **Every release must bump two things together:** `versionCode`/`versionName` in
 `app/build.gradle` *and* `app-release.json` (`versionCode`, `versionName`,
-`notes`). Publish the GitHub release first (so `Accord.apk` exists at the URL),
-then deploy the site with the matching `app-release.json`. Because only v1.3+
+`notes`). Publish the GitHub release first (so `Accord.apk` exists at the URL for
+the deploy's build step to fetch), then deploy the site with the matching
+`app-release.json`. Because only v1.3+
 carries the updater, users still on ≤ v1.2 upgrade to v1.3 manually once; every
 release after that is picked up in-app.
 

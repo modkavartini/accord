@@ -1,3 +1,8 @@
+# APK download: Netlify serves the static download/Accord.apk fetched at build
+# time (same origin, octet-stream — see _headers). This redirect only fires as a
+# fallback when that file is missing (a build-time fetch failure).
+/download/Accord.apk  https://github.com/modkavartini/accord/releases/latest/download/Accord.apk  302
+
 /go/*       /gate.html  200
 /https:/*   /gate.html  200
 /http:/*    /gate.html  200

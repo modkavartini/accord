@@ -373,21 +373,31 @@
       </p>
 
       <div class="hero-cta animate-fade-up d5">
-        <a class="btn btn-primary" href="https://github.com/modkavartini/accord/releases/latest/download/Accord.apk" style="padding:14px 28px;font-size:15px;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0"><path d="M12 3v12m0 0-4-4m4 4 4-4M5 21h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Download APK
+        <a class="btn btn-primary" id="get-cta" href="/download/Accord.apk" style="padding:14px 28px;font-size:15px;">
+          <span id="get-cta-icon" style="display:inline-flex;flex-shrink:0">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3v12m0 0-4-4m4 4 4-4M5 21h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <span id="get-cta-label">Download APK</span>
         </a>
-        <button class="btn btn-ghost" id="sign-in-hero" style="padding:14px 28px;font-size:15px;">
-          <svg id="sign-in-hero-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0">
-            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
-            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-          </svg>
-          <span id="sign-in-hero-label">Continue with Google</span>
-        </button>
       </div>
-      <p class="hero-cta-note animate-fade-up d5">Android 8+ · free · no Play Store needed &nbsp;·&nbsp; On a computer? <a href="/fill">Paste a form link instead →</a></p>
+      <p class="hero-cta-note animate-fade-up d5" id="hero-cta-note">Android 8+ · free · no Play Store needed &nbsp;·&nbsp; On a computer? <a href="/fill">Paste a form link instead →</a></p>
+      <script>
+        // Primary action follows the visitor's device:
+        //   Android  → Download APK   (HTML default)
+        //   Desktop  → Get the Chrome extension
+        (function () {
+          if (/Android/i.test(navigator.userAgent || '')) return; // keep the APK button
+          var cta   = document.getElementById('get-cta');
+          var icon  = document.getElementById('get-cta-icon');
+          var label = document.getElementById('get-cta-label');
+          var note  = document.getElementById('hero-cta-note');
+          // TODO: point at the Chrome Web Store listing once it's published.
+          if (cta) { cta.href = 'https://github.com/modkavartini/accord/tree/main/chrome-extension'; cta.target = '_blank'; cta.rel = 'noopener'; }
+          if (label) label.textContent = 'Get the Chrome extension';
+          if (icon) icon.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M19.439 7.85c-.049.322.059.648.289.878l1.568 1.568c.47.47.706 1.087.706 1.704s-.235 1.233-.706 1.704l-1.611 1.611a.98.98 0 0 1-.837.276c-.47-.07-.802-.48-.968-.925a2.501 2.501 0 1 0-3.214 3.214c.446.166.855.497.925.968a.98.98 0 0 1-.276.837l-1.61 1.61a2.404 2.404 0 0 1-1.705.707 2.402 2.402 0 0 1-1.704-.706l-1.568-1.568a1.026 1.026 0 0 0-.877-.29c-.493.074-.84.504-1.02.968a2.5 2.5 0 1 1-3.237-3.237c.464-.18.894-.527.967-1.02a1.026 1.026 0 0 0-.289-.877l-1.568-1.568A2.402 2.402 0 0 1 1.998 12c0-.617.236-1.234.706-1.704L4.23 8.77c.24-.24.581-.353.917-.303.515.077.877.528 1.073 1.01a2.5 2.5 0 1 0 3.259-3.259c-.482-.196-.933-.558-1.01-1.073-.05-.336.062-.676.303-.917l1.525-1.525A2.402 2.402 0 0 1 12 1.998c.617 0 1.234.236 1.704.706l1.568 1.568c.23.23.556.338.877.29.493-.074.84-.504 1.02-.968a2.5 2.5 0 1 1 3.237 3.237c-.464.18-.894.527-.967 1.02Z"/></svg>';
+          if (note) note.innerHTML = 'Chrome &amp; Edge · free &nbsp;·&nbsp; On your phone? <a href="/download/Accord.apk">Get the Android app →</a>';
+        })();
+      </script>
 
       <div class="steps animate-fade-up d5">
         <div class="step">
@@ -415,7 +425,7 @@
             Forms arrive on your phone — WhatsApp groups, Gmail, Instagram bios. With Accord installed, tapping any <code style="font-family:'Space Mono',monospace;font-size:12px;">forms.gle</code> link opens the form with your details already in place. No copying links around.
           </p>
           <div class="android-cta">
-            <a class="btn btn-primary" href="https://github.com/modkavartini/accord/releases/latest/download/Accord.apk">Download APK</a>
+            <a class="btn btn-primary" href="/download/Accord.apk">Download APK</a>
             <span class="android-meta" id="apkMeta">v1.3 · 1.6 MB</span>
           </div>
         </div>
@@ -500,22 +510,8 @@
   <script type="module">
     import { signInWithGoogle, onAuth } from './js/firebase.js';
 
-    const navBtn   = document.getElementById('sign-in-nav');
-    const heroBtn  = document.getElementById('sign-in-hero');
-    const heroLbl  = document.getElementById('sign-in-hero-label');
-    const heroIcon = document.getElementById('sign-in-hero-icon');
-    const preload  = document.getElementById('preloader');
-
-    const GOOGLE_ICON = `
-      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
-      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>`;
-    const DASHBOARD_ICON = `
-      <rect x="3" y="3" width="7.5" height="7.5" rx="1.5" fill="currentColor"/>
-      <rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5" fill="currentColor"/>
-      <rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5" fill="currentColor"/>
-      <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5" fill="currentColor"/>`;
+    const navBtn  = document.getElementById('sign-in-nav');
+    const preload = document.getElementById('preloader');
 
     function hidePreloader() {
       if (!preload) return;
@@ -527,15 +523,7 @@
 
     onAuth(user => {
       isSignedIn = !!user;
-      if (user) {
-        navBtn.textContent = 'Go to your dashboard';
-        heroLbl.textContent = 'Go to your dashboard';
-        if (heroIcon) heroIcon.innerHTML = DASHBOARD_ICON;
-      } else {
-        navBtn.textContent = 'Sign in';
-        heroLbl.textContent = 'Continue with Google';
-        if (heroIcon) heroIcon.innerHTML = GOOGLE_ICON;
-      }
+      navBtn.textContent = user ? 'Go to your dashboard' : 'Sign in';
       hidePreloader();
     });
 
@@ -553,7 +541,6 @@
     };
 
     navBtn.addEventListener('click', handleClick);
-    heroBtn.addEventListener('click', handleClick);
 
     // Safety: hide preloader after 1.5s even if auth never resolves
     setTimeout(hidePreloader, 1500);

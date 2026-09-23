@@ -1,4 +1,10 @@
 [build]
+  # Pull the latest release APK into the publish dir so it is served from our own
+  # origin (accord-ingly.netlify.app) instead of GitHub's short-lived, cross-origin
+  # signed redirect — some Android download managers (Nothing OS among them) stall
+  # at 100% on that redirect. Non-fatal: if the fetch fails, /download/Accord.apk
+  # falls back to a GitHub redirect (see _redirects).
+  command = "mkdir -p download && curl -fsSL --retry 3 -o download/Accord.apk https://github.com/modkavartini/accord/releases/latest/download/Accord.apk || echo 'WARN: APK fetch failed; /download/Accord.apk will fall back to the GitHub redirect'"
   publish = "."
   functions = "netlify/functions"
 

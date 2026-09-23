@@ -7,3 +7,12 @@
 # picked up promptly by the in-app updater.
 /app-release.json
   Cache-Control: public, max-age=300
+
+# The APK, served from our own origin. octet-stream (rather than
+# application/vnd.android.package-archive) stops some Android download managers
+# from trying to hand the file to the package installer mid-download, which is
+# what leaves them stuck at 100%.
+/download/Accord.apk
+  Content-Type: application/octet-stream
+  Content-Disposition: attachment; filename="Accord.apk"
+  Cache-Control: public, max-age=300
