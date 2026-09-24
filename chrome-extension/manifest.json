@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Accord for Google Forms",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Auto-fill any Google Form with your verified Google identity through Accord.",
   "homepage_url": "https://accord-ingly.netlify.app",
   "minimum_chrome_version": "88",

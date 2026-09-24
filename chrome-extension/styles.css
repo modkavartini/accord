@@ -159,8 +159,8 @@
    The overlay sits at z-index 1: above the question card's white background
    (an in-flow child, painted before positioned descendants) but below
    anything Google positions with its own z-index — the dropdown menu, the
-   "Other" text box focus ring, date pickers. mix-blend-mode: multiply keeps
-   the tint from washing out text underneath it either way. */
+   "Other" text box focus ring, date pickers. It carries no persistent fill
+   (see below), so painting on top never covers the option text. */
 .accord-filled {
   position: relative !important;
   isolation: isolate;
@@ -173,14 +173,20 @@
   right: 0 !important;
   bottom: 0 !important;
   pointer-events: none !important;
-  background-color: rgba(255, 222, 89, 0.22) !important;
-  border: 2px solid rgba(245, 180, 0, 0.7) !important;
+  /* Steady state is a border only — no persistent fill. A filled tint has to be
+     painted on top (Google nests its own white backgrounds inside each question,
+     so a highlight painted behind would vanish), and a permanent tint on top
+     reads as a layer sitting over the option text — worst on multiple-choice,
+     where it also muddied the coloured radio buttons. Instead the fill just
+     flashes once on fill and fades to transparent; the warm border + "a." badge
+     stay as the "Accord filled this" marker. */
+  background-color: transparent !important;
+  border: 2px solid rgba(245, 180, 0, 0.65) !important;
   border-radius: 8px !important;
   box-sizing: border-box !important;
   z-index: 1 !important;
-  mix-blend-mode: multiply;
   transition: opacity 160ms ease;
-  animation: accord-fill-pulse 900ms ease-out 1;
+  animation: accord-fill-pulse 1100ms ease-out 1;
 }
 
 /* Get out of the way the moment the visitor interacts with the question —
@@ -197,8 +203,9 @@
 }
 
 @keyframes accord-fill-pulse {
-  0%   { background-color: rgba(255, 222, 89, 0.6) !important; }
-  100% { background-color: rgba(255, 222, 89, 0.22) !important; }
+  0%   { background-color: rgba(255, 222, 89, 0.45) !important; }
+  70%  { background-color: rgba(255, 222, 89, 0.18) !important; }
+  100% { background-color: transparent !important; }
 }
 
 /* The "a." badge — small dark dot in the top-right of each filled question.
