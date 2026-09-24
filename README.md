@@ -93,7 +93,7 @@ Every successful parse is cached per-form in a Netlify Blob (`lib/schema-cache.j
 The 403 the gate receives carries `reader: "none" | "expired" | "denied"` so it can tell the visitor whether the fix is on the owner's side (reader not set up / offline) or theirs (org-restricted → use the extension).
 ## Chrome extension
 
-Load `chrome-extension/` unpacked (see its README). It adds an **Auto-fill with Accord** button to every Google Form and reads the questions straight from your signed-in browser — the fallback for forms that even the reader account can't view (restricted to an organisation). Accord remembers the form for everyone after that.
+Live on the Chrome Web Store: **[Accord for Google Forms](https://chromewebstore.google.com/detail/accord-for-google-forms/eglgdegnihkgchpkhjolnfacjakmopmo)** (or load `chrome-extension/` unpacked for development — see its README). It adds an **Auto-fill with Accord** button to every Google Form and reads the questions straight from your signed-in browser — the fallback for forms that even the reader account can't view (restricted to an organisation). Accord remembers the form for everyone after that.
 
 ## Profile rules
 
