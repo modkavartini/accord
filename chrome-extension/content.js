@@ -24,7 +24,10 @@
     readyState: document.readyState,
   });
 
-  const ACCORD_HOST = 'accord-ingly.netlify.app';
+  // Both the canonical custom domain and the netlify.app origin it redirects
+  // from — a gate opened on either (or an older extension build that still
+  // targets netlify.app) must be recognised as "came from Accord".
+  const ACCORD_HOSTS = ['accord.modka.is-a.dev', 'accord-ingly.netlify.app'];
 
   // Match both /forms/d/e/<id>/viewform and the multi-account
   // /forms/u/<N>/d/e/<id>/viewform variant. Skip /forms/d/<id>/edit — that's
@@ -69,7 +72,7 @@
   }
 
   // The gate redirects via window.location.href = formUrl, which sets the
-  // Referer to accord-ingly.netlify.app. We bail in this case so we don't
+  // Referer to the Accord origin. We bail in this case so we don't
   // re-launch the gate even when no entry.X params landed — e.g., when the
   // visitor's profile rules didn't match any of the form's question labels,
   // or when they toggled every field off in the gate's preview. Without
@@ -79,7 +82,7 @@
       const ref = document.referrer;
       if (!ref) return false;
       const u = new URL(ref);
-      return u.hostname === ACCORD_HOST;
+      return ACCORD_HOSTS.includes(u.hostname);
     } catch { return false; }
   }
 

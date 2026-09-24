@@ -6,7 +6,7 @@ Accord is a web app that creates identity-verified Google Form links.
 **Core flow:**
 1. Admin (you) logs in with Google → creates an "Accord"
 2. An Accord = a named bundle with a custom short slug + a Google Form URL + prefill field IDs
-3. You share `accord-ingly.netlify.app/go/your-slug` with attendees
+3. You share `accord.modka.is-a.dev/go/your-slug` with attendees
 4. When they open the link → they're prompted to sign in with Google (if not already)
 5. Their Google display name + email auto-prefill the form via URL params
 6. They're redirected to the prefilled Google Form → submit it
@@ -22,7 +22,7 @@ You run robotics/STEM training sessions via Google Meet and need to issue certif
 - **Auth:** Firebase Authentication (Google OAuth)
 - **Database:** Firebase Firestore
 - **Hosting:** Netlify (static site, with `_redirects` for SPA routing)
-- **Base URL:** `accord-ingly.netlify.app`
+- **Base URL:** `accord.modka.is-a.dev` (the netlify.app origin 301s here so Firebase Auth's per-origin session lives on one host)
 
 ---
 

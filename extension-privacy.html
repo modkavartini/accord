@@ -3,6 +3,24 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Canonicalize to one origin so Firebase Auth (its session is stored
+       per-origin) works across every entry point. Runs before anything else.
+       Skips the Accord Android app — its WebView only keeps the netlify.app
+       host in-app, so redirecting would boot it out to Chrome and break the
+       native auth bridge. Static files (the APK) have no <script>, so they are
+       never affected. -->
+  <script>
+  (function () {
+    try {
+      var ua = navigator.userAgent || '';
+      var inApp = !!window.AccordBridge || ua.indexOf('; wv') !== -1;
+      if (location.hostname === 'accord-ingly.netlify.app' && !inApp) {
+        location.replace('https://accord.modka.is-a.dev' +
+          location.pathname + location.search + location.hash);
+      }
+    } catch (e) {}
+  })();
+  </script>
   <title>Accord — Chrome extension privacy</title>
   <meta name="description" content="What the Accord for Google Forms Chrome extension does and does not do with your data." />
   <meta name="theme-color" content="#080808" />
@@ -89,7 +107,7 @@
     <h2>what leaves your browser</h2>
     <p>
       When you click “Auto-fill with Accord”, the form's question definition is
-      passed to the Accord web app (<code>accord-ingly.netlify.app</code>) so it can
+      passed to the Accord web app (<code>accord.modka.is-a.dev</code>) so it can
       build your prefilled link. It travels in the new tab's URL fragment (the part
       after <code>#</code>), which browsers never send over the network — the Accord
       page reads it locally.

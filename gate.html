@@ -3,6 +3,25 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Canonicalize to one origin so Firebase Auth (its session is stored
+       per-origin) works across every entry point. MUST run before the prefetch
+       script below so those requests aren't wasted on the wrong origin. Skips
+       the Accord Android app — its WebView only keeps the netlify.app host
+       in-app, so redirecting would boot it out to Chrome and break the native
+       auth bridge. Static files (the APK) have no <script>, so they are never
+       affected. The form-schema hash is carried across via location.hash. -->
+  <script>
+  (function () {
+    try {
+      var ua = navigator.userAgent || '';
+      var inApp = !!window.AccordBridge || ua.indexOf('; wv') !== -1;
+      if (location.hostname === 'accord-ingly.netlify.app' && !inApp) {
+        location.replace('https://accord.modka.is-a.dev' +
+          location.pathname + location.search + location.hash);
+      }
+    } catch (e) {}
+  })();
+  </script>
   <title>Accord</title>
   <meta name="description" content="You've been invited to fill an Accord-enabled Google Form. Sign in once and your details auto-fill, every time." />
   <meta name="theme-color" content="#080808" />

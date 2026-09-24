@@ -10,7 +10,7 @@ Accord adds a small "Auto-fill with Accord" button to the corner of any Google F
 
 Works where other auto-fillers can't. Because the button reads the form from your own signed-in browser, it handles forms Accord's servers can't open on their own — including forms restricted to an organisation that only a member can view. The first time anyone opens such a form through Accord, its questions are remembered, so the next person to open it — on any device, with or without the extension — gets auto-fill too.
 
-Set up once, done forever. Save your details at accord-ingly.netlify.app, then every form you open just fills itself.
+Set up once, done forever. Save your details at accord.modka.is-a.dev, then every form you open just fills itself.
 
 Private by design.
 - No account to create in the extension.

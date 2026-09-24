@@ -27,13 +27,13 @@ Auto-fill any Google Form with your verified Google identity through Accord.
 > such a form through Accord, its questions are remembered so the next visitor —
 > on any device, with or without the extension — gets auto-fill too.
 >
-> Set your details up once at accord-ingly.netlify.app. No accounts to create in
+> Set your details up once at accord.modka.is-a.dev. No accounts to create in
 > the extension, no tracking, and it only ever runs on Google Forms pages.
 >
 > Accord is open source: github.com/modkavartini/accord
 
-**Homepage URL:** https://accord-ingly.netlify.app
-**Privacy policy URL:** https://accord-ingly.netlify.app/extension-privacy
+**Homepage URL:** https://accord.modka.is-a.dev
+**Privacy policy URL:** https://accord.modka.is-a.dev/extension-privacy
 **Support:** https://github.com/modkavartini/accord/issues
 
 ## Privacy tab answers

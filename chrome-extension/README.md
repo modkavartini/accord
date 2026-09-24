@@ -3,7 +3,7 @@
 When you open a Google Form, a small **"a. Auto-fill with Accord"** pill
 appears in the top-right corner of the page. Clicking it reads the form's
 questions straight from the page and opens the Accord gate
-(`accord-ingly.netlify.app/go/<formId>#schema=…`) in a new tab. The gate then
+(`accord.modka.is-a.dev/go/<formId>#schema=…`) in a new tab. The gate then
 redirects that tab back to the form with your details prefilled, and every
 auto-filled question gets a yellow wash + an "a." badge in the corner.
 
@@ -61,7 +61,8 @@ developing; it ships `false` so a normal form visit leaves the page console clea
 - URL is `/forms/d/e/<id>/viewform` **with** `entry.X` params →
   it's the post-gate prefilled form; show a confirmation toast and
   highlight the prefilled questions.
-- URL has no entry params **but** `document.referrer` is `accord-ingly.netlify.app` →
+- URL has no entry params **but** `document.referrer` is an Accord origin
+  (`accord.modka.is-a.dev` or the `accord-ingly.netlify.app` it redirects from) →
   the gate sent the visitor here even though no fields matched; don't
   re-show the button (would invite a loop). Visitor can still fill manually.
 - URL is the form editor (`/forms/d/<id>/edit`) → ignored.

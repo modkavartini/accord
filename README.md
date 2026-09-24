@@ -9,7 +9,7 @@ Accord is a static site that takes any Google Form link and prefills it with val
 Same form, both ways — open them side by side:
 
 - Without Accord: https://forms.gle/RqSQeNQN1FLKhKof9
-- With Accord: https://accord-ingly.netlify.app/go/RqSQeNQN1FLKhKof9
+- With Accord: https://accord.modka.is-a.dev/go/RqSQeNQN1FLKhKof9
 
 ## Android app
 

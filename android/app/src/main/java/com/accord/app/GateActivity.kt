@@ -356,7 +356,7 @@ class GateActivity : AppCompatActivity() {
     /**
      * Returns true if we intercepted (don't let WebView handle), false to let
      * the WebView load it.
-     *  - accord-ingly.netlify.app  -> keep in WebView
+     *  - accord.modka.is-a.dev / accord-ingly.netlify.app -> keep in WebView
      *  - docs.google.com/forms/... -> respect openFormsInApp toggle
      *  - everything else           -> external app (rare)
      */
@@ -364,7 +364,7 @@ class GateActivity : AppCompatActivity() {
         if (url == null) return false
         val host = url.host ?: return false
 
-        if (host.endsWith(ACCORD_HOST)) return false
+        if (ACCORD_HOSTS.any { host == it || host.endsWith(".$it") }) return false
 
         val isGoogleForm =
             host == "docs.google.com" && (url.path?.startsWith("/forms/") == true)
@@ -408,8 +408,11 @@ class GateActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_FORM_ID = "form_id"
         const val EXTRA_URL     = "url"
-        const val ACCORD_BASE = "https://accord-ingly.netlify.app"
-        const val ACCORD_HOST = "accord-ingly.netlify.app"
+        const val ACCORD_BASE = "https://accord.modka.is-a.dev"
+        // Canonical custom domain first; the netlify.app origin it 301s from is
+        // still kept in-WebView so older links (and this app's own prior builds)
+        // don't get booted out to Chrome.
+        val ACCORD_HOSTS = listOf("accord.modka.is-a.dev", "accord-ingly.netlify.app")
 
         fun intentForForm(ctx: android.content.Context, formId: String): Intent =
             Intent(ctx, GateActivity::class.java).putExtra(EXTRA_FORM_ID, formId)

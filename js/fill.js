@@ -71,7 +71,7 @@ function clearStatus() {
 
 // ─── Result rendering ─────────────────────────────────────────────────────
 function showResult(formId, { requiresSignIn = false } = {}) {
-  const link = `accord-ingly.netlify.app/go/${formId}`;
+  const link = `accord.modka.is-a.dev/go/${formId}`;
   const href = `https://${link}`;
   $('fill-result-link').textContent = link;
   $('fill-open-btn').href = href;

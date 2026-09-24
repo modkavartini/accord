@@ -161,8 +161,8 @@ async function loadAccords() {
 
 function renderCard(accord, i) {
   const formId       = accord.formId || extractFormId(accord.formUrl) || '';
-  const canonicalLink = formId ? `accord-ingly.netlify.app/go/${formId}` : '';
-  const aliasLink     = accord.slug ? `accord-ingly.netlify.app/go/${accord.slug}` : '';
+  const canonicalLink = formId ? `accord.modka.is-a.dev/go/${formId}` : '';
+  const aliasLink     = accord.slug ? `accord.modka.is-a.dev/go/${accord.slug}` : '';
   const date = accord.createdAt?.toDate
     ? accord.createdAt.toDate().toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' })
     : '—';

@@ -107,7 +107,7 @@ async function parseFormUrl() {
 function revealExtras(formId, formTitle) {
   createFormId = formId;
   if (formTitle && !$('c-name').value.trim()) $('c-name').value = formTitle;
-  $('c-default-link').textContent = `accord-ingly.netlify.app/go/${formId}`;
+  $('c-default-link').textContent = `accord.modka.is-a.dev/go/${formId}`;
   $('c-after-fields').classList.remove('hidden');
   $('c-link-field').classList.remove('hidden');
   $('c-slug-field').classList.remove('hidden');

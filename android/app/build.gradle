@@ -18,7 +18,7 @@ android {
         // Where the in-app updater looks for the latest published build. The JSON
         // (app-release.json, at the site root) carries the newest versionCode +
         // the APK download URL; AppUpdater compares it to VERSION_CODE above.
-        buildConfigField "String", "UPDATE_MANIFEST_URL", "\"https://accord-ingly.netlify.app/app-release.json\""
+        buildConfigField "String", "UPDATE_MANIFEST_URL", "\"https://accord.modka.is-a.dev/app-release.json\""
     }
 
     // Release signing comes from android/keystore.properties (git-ignored):

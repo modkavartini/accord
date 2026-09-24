@@ -5,7 +5,7 @@
 // URL hash — fragments never leave the browser, so nothing is sent to the
 // server until the gate itself decides to cache it.
 
-const ACCORD_BASE = 'https://accord-ingly.netlify.app';
+const ACCORD_BASE = 'https://accord.modka.is-a.dev';
 // Generous: a 100-question form is ~30KB; Chrome's URL ceiling is 2MB.
 const MAX_SCHEMA_CHARS = 1_000_000;
 
