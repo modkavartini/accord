@@ -1,7 +1,7 @@
 {
-  "versionCode": 4,
-  "versionName": "1.3",
+  "versionCode": 5,
+  "versionName": "1.3.1",
   "apkUrl": "https://accord.modka.is-a.dev/download/Accord.apk",
-  "notes": "• The app can now update itself — no more downloading APKs by hand.\n• Fixed the logo font on the loading screen.",
+  "notes": "• Faster: screens now load near-instantly on repeat use.\n• Stays in the app — the logo no longer bounces you out to the website.\n• Clearer first-time setup, and you can share any form link to Accord to auto-fill it.",
   "minSupported": 1
 }
