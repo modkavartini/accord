@@ -9,9 +9,11 @@
     <string name="history_header">Recent fills</string>
     <string name="history_empty">Forms you auto-fill will appear here.</string>
     <string name="fill_again">Fill again</string>
-    <string name="setup_required">◆  Setup required</string>
-    <string name="setup_blurb">Allow Accord to open forms.gle links by default. Tap below — you\'ll just need to flip the toggle on the next screen.</string>
+    <string name="setup_required">◆  One-time setup</string>
+    <string name="setup_blurb">Let Accord open Google Form links automatically. Tap below, then turn on <b>Open supported links</b> on the next screen.</string>
     <string name="open_settings">Open settings</string>
+    <string name="setup_enable_cta">Enable link opening →</string>
+    <string name="share_tip">💡  <b>No setup?</b> You can still share any Google Form link to Accord — it opens auto-filled.</string>
     <string name="sign_in_tagline">Sign in once, and every form you tap is auto-filled with your saved profile.</string>
     <string name="open_filled_forms_in_app">Open filled forms inside Accord</string>
     <string name="open_filled_forms_in_app_desc">When off, the prefilled Google Form opens in your default browser after the gate.</string>

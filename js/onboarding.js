@@ -257,6 +257,12 @@ function renderDone(form) {
     <div class="ob-summary">
       ${rows.map(r => `<div class="ob-summary-row"><span class="k">${escHtml(r.k)}</span><span class="v">${escHtml(r.v)}</span></div>`).join('')}
     </div>
+    ${goingToForm ? '' : `
+    <div class="ob-testit glass">
+      <p class="ob-testit-title">✦ Now try it</p>
+      <p class="ob-testit-text">Open any Google Form link — a <code>forms.gle</code> or <code>docs.google.com/forms</code> link — and watch Accord fill it from your profile before you even see it.</p>
+      <p class="ob-testit-text in-app-only" style="display:none;">Tip: you can also <strong>share any form link to Accord</strong> from another app to auto-fill it — no setup needed.</p>
+    </div>`}
     <div class="ob-actions">
       <a class="btn btn-ghost" href="${returnTo === '/profile' ? '/profile' : `/profile?returnTo=${encodeURIComponent(returnTo)}`}">Fine-tune in profile</a>
       <a class="btn btn-primary" id="ob-finish" href="${escHtml(returnTo)}">${goingToForm ? 'Back to the form →' : 'Go to dashboard →'}</a>

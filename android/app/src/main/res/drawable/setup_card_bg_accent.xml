@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Attention-grabbing variant of the glass card: warm amber tint + border, so
+     the "setup required" prompt stands out from the rest of the dark UI. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="#1FFFB020" />
+    <stroke android:width="1.5dp" android:color="#59FFB020" />
+    <corners android:radius="14dp" />
+</shape>

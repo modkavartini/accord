@@ -151,6 +151,53 @@
                 </LinearLayout>
             </LinearLayout>
 
+            <!-- Setup card (forms.gle default app) — shown until enabled.
+                 Placed high and given an amber accent so a new user notices it. -->
+            <LinearLayout
+                android:id="@+id/setupCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/setup_card_bg_accent"
+                android:padding="20dp"
+                android:layout_marginBottom="18dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/setup_required"
+                    android:textColor="#FFC24B"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.04"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/setup_blurb"
+                    android:textColor="#C6F0F0F0"
+                    android:textSize="13sp"
+                    android:lineSpacingMultiplier="1.55"
+                    android:layout_marginBottom="16dp" />
+
+                <Button
+                    android:id="@+id/enableButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/setup_enable_cta"
+                    android:textColor="#080808"
+                    android:textAllCaps="false"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:background="@drawable/btn_primary"
+                    android:paddingHorizontal="18dp"
+                    android:paddingVertical="12dp"
+                    android:stateListAnimator="@null"
+                    android:elevation="0dp" />
+            </LinearLayout>
+
             <!-- Open dashboard -->
             <Button
                 android:id="@+id/dashboardBtn"
@@ -181,51 +228,18 @@
                 android:elevation="0dp"
                 android:layout_marginBottom="32dp" />
 
-            <!-- Setup card (forms.gle default app) -->
-            <LinearLayout
-                android:id="@+id/setupCard"
+            <!-- Share-to-Accord tip: the friction-free path that needs no
+                 default-app setup. Always visible so users learn it. -->
+            <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
+                android:text="@string/share_tip"
+                android:textColor="#A6F0F0F0"
+                android:textSize="12.5sp"
+                android:lineSpacingMultiplier="1.5"
                 android:background="@drawable/setup_card_bg"
-                android:padding="20dp"
-                android:layout_marginBottom="32dp"
-                android:visibility="gone">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/setup_required"
-                    android:textColor="#F0F0F0"
-                    android:textSize="13sp"
-                    android:textStyle="bold"
-                    android:letterSpacing="0.04"
-                    android:layout_marginBottom="8dp" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/setup_blurb"
-                    android:textColor="#80F0F0F0"
-                    android:textSize="13sp"
-                    android:lineSpacingMultiplier="1.55"
-                    android:layout_marginBottom="14dp" />
-
-                <Button
-                    android:id="@+id/enableButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/open_settings"
-                    android:textColor="#080808"
-                    android:textAllCaps="false"
-                    android:textSize="13sp"
-                    android:textStyle="bold"
-                    android:background="@drawable/btn_primary"
-                    android:paddingHorizontal="18dp"
-                    android:paddingVertical="9dp"
-                    android:stateListAnimator="@null"
-                    android:elevation="0dp" />
-            </LinearLayout>
+                android:padding="14dp"
+                android:layout_marginBottom="32dp" />
 
             <!-- History header -->
             <TextView

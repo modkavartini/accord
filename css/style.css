@@ -1558,3 +1558,28 @@ nav, main, footer, .modal-overlay { position: relative; z-index: 1; }
   .switch-row { padding: 12px 14px; }
 }
 @keyframes slideUp { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* Toggled by html.in-app (set by the head snippet / js/app-shell.js).
+   .hide-in-app — desktop-only chrome (extension CTA, "go home"): hidden in app.
+   .in-app-only — app-only hints (e.g. "share the link to Accord"): hidden on
+   web (inline display:none) and revealed in app; !important beats that inline. */
+.in-app .hide-in-app { display: none !important; }
+.in-app .in-app-only { display: block !important; }
+
+.share-hint {
+  max-width: 340px;
+  margin: 18px auto 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: rgba(240,240,240,0.55);
+  text-align: center;
+}
+.share-hint strong { color: rgba(240,240,240,0.9); }
+
+/* Onboarding "now try it" card on the completion screen. */
+.ob-testit { padding: 16px 18px; margin: 20px 0 4px; text-align: left; }
+.ob-testit-title { font-family: 'Space Mono', monospace; font-size: 12px; letter-spacing: 0.06em; color: #f0f0f0; margin: 0 0 6px; }
+.ob-testit-text { font-size: 13px; line-height: 1.6; color: rgba(240,240,240,0.55); margin: 0; }
+.ob-testit-text + .ob-testit-text { margin-top: 8px; }
+.ob-testit-text code { font-family: 'Space Mono', monospace; font-size: 11.5px; color: rgba(240,240,240,0.75); }
+.ob-testit-text strong { color: rgba(240,240,240,0.9); }

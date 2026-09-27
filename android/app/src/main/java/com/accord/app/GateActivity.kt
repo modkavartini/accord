@@ -288,6 +288,14 @@ class GateActivity : AppCompatActivity() {
         wv.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 val url = request.url
+                // The app never shows the marketing homepage. The in-page "a."
+                // logo links to "/"; inside the app, send a tap on it to the
+                // dashboard instead. Gated on hasGesture() so it only catches a
+                // real tap — JS redirects (e.g. an auth bounce) are left alone.
+                if (request.hasGesture() && isAccordHome(url)) {
+                    webView.loadUrl("$ACCORD_BASE/dashboard")
+                    return true
+                }
                 return handleNavigation(url)
             }
 
@@ -360,6 +368,15 @@ class GateActivity : AppCompatActivity() {
      *  - docs.google.com/forms/... -> respect openFormsInApp toggle
      *  - everything else           -> external app (rare)
      */
+    /** True when the URL is the Accord marketing homepage ("/" or index.html)
+     *  on either Accord host — the one page the app should never display. */
+    private fun isAccordHome(url: Uri?): Boolean {
+        val host = url?.host ?: return false
+        if (ACCORD_HOSTS.none { host == it || host.endsWith(".$it") }) return false
+        val path = url.path.orEmpty()
+        return path.isEmpty() || path == "/" || path == "/index.html"
+    }
+
     private fun handleNavigation(url: Uri?): Boolean {
         if (url == null) return false
         val host = url.host ?: return false
