@@ -203,10 +203,23 @@ export function seedProfile(profile, user) {
   if (!Array.isArray(profile.fields)) profile.fields = [];
   profile.fields = profile.fields.map(f => ({ source: 'value', enabled: true, firstOnly: true, ...f }));
 
+  let seeded = false;
+
+  // Migrate the IEEE membership yes/no rule from the old literal patterns to
+  // whole-word 'all' matching, so variants like "IEEE Computer Society (IEEE
+  // CS) member?" are recognised. Idempotent — only touches rules still on the
+  // old shape.
+  for (const f of profile.fields) {
+    if ((f.label || '').toLowerCase() === 'ieee member' && f.match !== 'all') {
+      f.match = 'all';
+      f.patterns = ['IEEE member'];
+      seeded = true;
+    }
+  }
+
   const hasLabel = label =>
     profile.fields.some(f => (f.label || '').toLowerCase() === label.toLowerCase());
 
-  let seeded = false;
   if (!hasLabel('Name')) {
     profile.fields.push({
       id: nanoid(8), label: 'Name', match: 'contains', patterns: ['Name'],

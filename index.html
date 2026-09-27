@@ -105,6 +105,25 @@
       margin-bottom: 32px;
     }
 
+    /* Proud social-proof line — "2k+ people…" */
+    .hero-stat {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 8px;
+      margin: -14px 0 30px;
+      font-family: 'Space Mono', monospace;
+      font-size: 13px;
+      letter-spacing: 0.02em;
+      color: rgba(240,240,240,0.4);
+    }
+    .hero-stat strong {
+      font-family: 'Major Mono Display', monospace;
+      font-size: 20px;
+      font-weight: 400;
+      color: #f0f0f0;
+      letter-spacing: 0.01em;
+    }
+
     /* Three ways to open a form through Accord */
     .ways {
       display: grid;
@@ -387,7 +406,11 @@
       </h1>
 
       <p class="hero-sub animate-fade-up d3">
-        Save your name, email, phone, college and roll number once. On Android, every Google Form link you tap opens already filled in — on the web, paste the link.
+        Save your name, email, phone, college and more once. On Android, every Google Form link you tap opens already filled in — on the web, paste the link.
+      </p>
+
+      <p class="hero-stat animate-fade-up d4" id="hero-stat" hidden>
+        <strong id="hero-stat-num"></strong> people fill forms with Accord
       </p>
 
       <div class="hero-cta animate-fade-up d5">
@@ -425,7 +448,7 @@
         <div class="step">
           <div class="step-num">2</div>
           <strong>Answer a few questions</strong>
-          Phone, college, branch, year, roll number, IEEE ID — about a minute.
+          Phone, gender, college, branch, year, IEEE ID — about a minute.
         </div>
         <div class="step">
           <div class="step-num">3</div>
@@ -525,10 +548,30 @@
   </footer>
 
   <script type="module">
-    import { signInWithGoogle, onAuth } from './js/firebase.js';
+    import { signInWithGoogle, onAuth, getUserCount } from './js/firebase.js';
 
     const navBtn  = document.getElementById('sign-in-nav');
     const preload = document.getElementById('preloader');
+
+    // Proud user count. Round down to a clean figure and add "+": 57 → 50+,
+    // 137 → 100+, 2000 → 2k+, 2450 → 2.4k+.
+    function proudCount(n) {
+      n = Math.max(0, Math.floor(n));
+      if (n < 10)   return n + '+';
+      if (n < 100)  return Math.floor(n / 10) * 10 + '+';
+      if (n < 1000) return Math.floor(n / 100) * 100 + '+';
+      const k = Math.floor(n / 100) / 10;               // one decimal, floored
+      return (Number.isInteger(k) ? k : k.toFixed(1)) + 'k+';
+    }
+    (async () => {
+      try {
+        const n = await getUserCount();
+        if (n > 0) {
+          document.getElementById('hero-stat-num').textContent = proudCount(n);
+          document.getElementById('hero-stat').hidden = false;
+        }
+      } catch (e) { /* stat is optional — stay quiet on failure */ }
+    })();
 
     function hidePreloader() {
       if (!preload) return;

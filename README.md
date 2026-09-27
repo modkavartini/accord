@@ -155,9 +155,15 @@ It is the same parser, blob cache and reader Pi that `/fill` uses — `/api` onl
 | `accords` | Saved accords (slug → form + fields) | read: public · write: owner |
 | `profiles/{uid}` | Per-user fill rules | owner only |
 | `user_stats/{uid}`, `form_visits/{formId}` | Counters | signed-in write |
+| `app_stats/global` | Total user count for the home-page stat | read: public · signed-in write |
 | `form_schemas/{formId}` | Cached question list per form (server-parsed or extension-read) | read: public · write: any signed-in user |
 
 ```
+match /app_stats/{doc} {
+  allow read: if true;                 // home page reads the count while signed out
+  allow write: if request.auth != null; // bumped once per new user
+}
+
 match /form_schemas/{formId} {
   allow read: if true;
   allow write: if request.auth != null

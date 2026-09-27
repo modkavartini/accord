@@ -44,6 +44,16 @@ export function matchStr(mode, haystack, needle) {
     case 'contains':   return v.includes(pp);
     case 'startsWith': return v.startsWith(pp);
     case 'endsWith':   return v.endsWith(pp);
+    // Every word of the needle must appear as a whole word in the question,
+    // order-independent — lets one pattern require two words at once.
+    // "IEEE member" matches "Are you an IEEE Computer Society (IEEE CS)
+    // member?" yet not "IEEE Membership ID" ("member" ≠ "membership"),
+    // which naive `contains` can't distinguish.
+    case 'all': {
+      const hay    = norm(haystack);
+      const tokens = norm(needle).split(' ').filter(Boolean);
+      return tokens.length > 0 && tokens.every(t => hasPhrase(hay, t));
+    }
     default:           return false;
   }
 }

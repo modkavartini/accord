@@ -14,6 +14,7 @@ let editingFieldId = null;
 // ─── Popular presets (custom fields) ──────────────────────────────────────
 const PRESETS = [
   { label: 'Phone Number',    match: 'contains', patterns: ['Phone', 'Number', 'Contact'] },
+  { label: 'Gender',          match: 'contains', patterns: ['Gender', 'Sex']             },
   { label: 'IEEE Membership ID', match: 'contains', patterns: ['IEEE', 'Membership ID']      },
   { label: 'College',         match: 'contains', patterns: ['College', 'Institution', 'University'] },
   { label: 'Year of Study',   match: 'contains', patterns: ['Year', 'Batch', 'Semester']  },
@@ -209,7 +210,7 @@ function renderChoiceLine(f) {
           <div class="pf-vars">${chips}</div>`;
 }
 function describeMatch(mode) {
-  return { contains: 'contains', startsWith: 'starts with', endsWith: 'ends with', equals: 'equals' }[mode] || mode;
+  return { contains: 'contains', all: 'contains all words', startsWith: 'starts with', endsWith: 'ends with', equals: 'equals' }[mode] || mode;
 }
 
 async function toggleField(id, enabled) {

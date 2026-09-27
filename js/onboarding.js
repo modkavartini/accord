@@ -40,6 +40,13 @@ const STEPS = [
     patterns: ['Phone', 'Mobile', 'Contact', 'WhatsApp'], type: 'tel', autocomplete: 'tel', placeholder: '+91 98765 43210',
   },
   {
+    key: 'gender', label: 'Gender',
+    question: 'What gender do you go by?',
+    hint: "Pick one or type your own — skip if you'd rather not say.",
+    patterns: ['Gender', 'Sex'], autocomplete: 'sex', placeholder: 'e.g. Female',
+    chips: ['Male', 'Female'],
+  },
+  {
     key: 'org', label: 'College',
     question: 'What organisation, college or institution are you part of?',
     hint: 'The full name, as forms usually list it.',
@@ -62,17 +69,14 @@ const STEPS = [
     chips: ['1st year', '2nd year', '3rd year', '4th year'],
   },
   {
-    key: 'roll', label: 'Roll Number',
-    question: "What's your roll or register number?",
-    hint: 'As it appears on your ID card.',
-    patterns: ['Roll', 'Reg', 'Admission'], placeholder: 'e.g. TVE22CS042',
-  },
-  {
     key: 'ieee', label: 'IEEE Membership ID',
     question: 'Are you an IEEE member?',
     hint: 'Accord answers the yes/no and fills your ID on IEEE forms.',
     patterns: ['IEEE', 'Membership ID'], placeholder: 'e.g. 98765432',
-    yesNo: { label: 'IEEE Member', patterns: ['Are you an IEEE member', 'IEEE member?'], subLabel: 'Your IEEE membership ID' },
+    // 'all' so "IEEE member" catches every phrasing — "Are you an IEEE
+    // member?", "IEEE Computer Society (IEEE CS) member?" — without also
+    // grabbing the "IEEE Membership ID" text question.
+    yesNo: { label: 'IEEE Member', match: 'all', patterns: ['IEEE member'], subLabel: 'Your IEEE membership ID' },
   },
 ];
 
@@ -283,7 +287,7 @@ async function commitStep() {
     const a = answers[s.key];
     if (!a.choice) { toast('Pick Yes or No, or skip'); return; }
     if (a.choice === 'Yes') a.value = value;
-    upsertRule(s.yesNo.label, s.yesNo.patterns, a.choice);
+    upsertRule(s.yesNo.label, s.yesNo.patterns, a.choice, null, s.yesNo.match);
     if (a.choice === 'Yes' && value) upsertRule(s.label, s.patterns, value);
   } else {
     if (s.required && !value) { toast('This one we need'); input?.focus(); return; }
@@ -320,16 +324,19 @@ async function commitStep() {
 // Update the rule with this label, or add one. New rules go in *before* the
 // seeded Name rule: Name matches "contains Name", so "College Name" must
 // reach the College rule first (rules fire in profile order).
-function upsertRule(label, patterns, value, choicePatterns = null) {
+function upsertRule(label, patterns, value, choicePatterns = null, match = null) {
   const existing = findRule(label);
   if (existing) {
     existing.value = value;
     existing.source = 'value';
     existing.enabled = true;
+    // Refresh the matcher when the step names one explicitly (e.g. the IEEE
+    // membership question moving to 'all'), so returning users get the fix.
+    if (match) { existing.match = match; existing.patterns = patterns; }
     if (choicePatterns) { existing.choicePatterns = choicePatterns; existing.choiceMatch = existing.choiceMatch || 'auto'; }
     return;
   }
-  const rule = { id: nanoid(8), label, match: 'contains', patterns, source: 'value', value, enabled: true, firstOnly: true,
+  const rule = { id: nanoid(8), label, match: match || 'contains', patterns, source: 'value', value, enabled: true, firstOnly: true,
                  ...(choicePatterns ? { choiceMatch: 'auto', choicePatterns } : {}) };
   const nameIdx = label === 'Name' ? -1
     : profile.fields.findIndex(f => (f.label || '').toLowerCase() === 'name');

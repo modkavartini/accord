@@ -94,11 +94,29 @@ export async function saveProfile(userId, profile) {
  * in firebase-core.js). Returns the (possibly updated) profile.
  */
 export async function ensureProfileSeeded(user) {
-  const { profile, seeded } = seedProfile(await getProfile(user.uid), user);
-  if (seeded) {
+  const ref  = doc(db, 'profiles', user.uid);
+  const snap = await getDoc(ref);
+  const existed = snap.exists();
+  const { profile, seeded } = seedProfile(existed ? snap.data() : { fields: [] }, user);
+  if (seeded || !existed) {
     try { await saveProfile(user.uid, profile); } catch (e) { console.error(e); }
   }
+  // First time we ever create this user's profile → count them once.
+  if (!existed) { try { await bumpUserCount(); } catch (e) { console.error(e); } }
   return profile;
+}
+
+// ─── Global user count (landing-page vanity stat) ──────────────────────────
+// One shared doc, bumped once per new user (see ensureProfileSeeded), read
+// publicly on the home page. Seed app_stats/global.users in the Firebase
+// console with your current user total so the number reflects reality.
+export async function bumpUserCount() {
+  await setDoc(doc(db, 'app_stats', 'global'), { users: increment(1) }, { merge: true });
+}
+
+export async function getUserCount() {
+  const snap = await getDoc(doc(db, 'app_stats', 'global'));
+  return snap.exists() ? (snap.data().users || 0) : 0;
 }
 
 // ─── Counters ─────────────────────────────────────────────────────────────
