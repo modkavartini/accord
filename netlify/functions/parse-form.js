@@ -250,6 +250,10 @@ function questionsToFields(rawFields) {
       if (typeof entryNum !== 'number') continue;
       const field = { entryId: `entry.${entryNum}`, label };
       if (type !== null) field.type = type;
+      // Google's required flag for this sub-field. Nothing in the gate acts
+      // on it; /api passes it on, where a caller asking "does this form make
+      // you name your college" needs to know whether it can be left blank.
+      if (s[2]) field.required = true;
       if (CHOICE_TYPES.has(type) && Array.isArray(s[1])) {
         const options = [];
         let hasOther = false;

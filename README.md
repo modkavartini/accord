@@ -109,6 +109,38 @@ Each rule matches a question by its label (`contains` / `starts with` / `ends wi
 - `/go/<formId>` — any Google Form by ID
 - `/go/<forms.gle-code>` — any Google Form by short code
 
+## API
+
+`/api` is a read-only JSON view of what a Google Form asks, for anything that needs to know before a person opens the form.
+
+```
+GET /api                    what the API offers
+GET /api/form?url=<link>    the form's title and questions
+```
+
+`url` takes every shape `/fill` takes: a full `docs.google.com` form URL, a `forms.gle` link, a common shortener, or a bare form ID.
+
+```json
+{
+  "formId": "1FAIpQLSf…",
+  "formUrl": "https://docs.google.com/forms/d/e/1FAIpQLSf…/viewform",
+  "title": "SHOCKWAVE — Registration",
+  "requiresSignIn": false,
+  "questions": [
+    { "entryId": "emailAddress", "label": "Email", "type": "email" },
+    { "entryId": "entry.477113258", "label": "Team Name", "type": "short answer", "required": true },
+    { "entryId": "entry.1303817865", "label": "Department / Branch", "type": "dropdown",
+      "required": true, "options": ["ECE", "CSE", "Other"], "hasOther": true }
+  ]
+}
+```
+
+`type` is one of `short answer`, `paragraph`, `multiple choice`, `dropdown`, `checkboxes`, `linear scale`, `grid`, `date`, `time`, `email`. `entryId` is the prefill key — `?entry.477113258=Alpha` on the form URL fills that box. `hasOther` says the choice question has an "Other…" box, so an answer outside `options` is allowed.
+
+It is the same parser, blob cache and reader Pi that `/fill` uses — `/api` only adds the stable public shape, so a form read here is warm for the gate and the other way round. Errors pass parse-form's status through: `403` with `requiresSignIn` for a form only a signed-in account can see, `400`/`422` for a link that is not a readable form. CORS is open, as on `parse-form`; a form's *responses* are not reachable here, only the questions anybody with the link can already read.
+
+**Who uses it:** [arinjo.in](https://arinjo.in) reads registration forms through it to tell a public event from an intra-college one — a form that never asks which college you are from is a form for one campus.
+
 ## Stack
 
 - Vanilla HTML / CSS / JS, no build step

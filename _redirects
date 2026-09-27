@@ -3,6 +3,10 @@
 # fallback when that file is missing (a build-time fetch failure).
 /download/Accord.apk  https://github.com/modkavartini/accord/releases/latest/download/Accord.apk  302
 
+# The read API (netlify/functions/api.js): what a Google Form asks, as JSON.
+/api        /.netlify/functions/api  200
+/api/*      /.netlify/functions/api  200
+
 /go/*       /gate.html  200
 /https:/*   /gate.html  200
 /http:/*    /gate.html  200
