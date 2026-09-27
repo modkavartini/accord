@@ -218,6 +218,12 @@ nav, main, footer, .modal-overlay { position: relative; z-index: 1; }
   align-items: center;
   justify-content: space-between;
   padding: 20px 48px;
+  /* Respect the status bar / camera cutout on edge-to-edge devices (Android 15,
+     notched phones) so the logo + user pill aren't drawn under the system bar.
+     env() is 0 in normal browsers, so this is a no-op off-device. */
+  padding-top: calc(20px + env(safe-area-inset-top));
+  padding-left: calc(48px + env(safe-area-inset-left));
+  padding-right: calc(48px + env(safe-area-inset-right));
   border-bottom: 1px solid rgba(255,255,255,0.05);
   position: sticky;
   top: 0;
@@ -1469,10 +1475,19 @@ nav, main, footer, .modal-overlay { position: relative; z-index: 1; }
 
 /* ── Responsive ── */
 @media (max-width: 600px) {
-  .navbar { padding: 14px 16px; }
+  .navbar {
+    padding: 14px 16px;
+    padding-top: calc(14px + env(safe-area-inset-top));
+    padding-left: calc(16px + env(safe-area-inset-left));
+    padding-right: calc(16px + env(safe-area-inset-right));
+  }
   .modal-box { padding: 28px 20px; }
   .gate-card { padding: 32px 20px; border-radius: 18px; }
-  .gate-wrap { padding: 16px 12px; }
+  .gate-wrap {
+    padding: 16px 12px;
+    padding-top: calc(16px + env(safe-area-inset-top));
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  }
   .gate-title { font-size: 26px; }
   .gate-sub { font-size: 13px; margin-bottom: 28px; }
   main.dashboard-main { padding: 32px 16px; }
