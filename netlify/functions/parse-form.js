@@ -282,14 +282,40 @@ function extractFormId(pathname) {
   return m ? m[1] : null;
 }
 
-function extractTitle(html, data) {
-  // Prefer the array — it has the unaltered form title. Fall back to <title>.
-  const fromData = data?.[3] || data?.[1]?.[8];
-  if (typeof fromData === 'string' && fromData.trim()) return fromData.trim();
+// Google's name for a form whose Drive file was never named. It sits in
+// data[3] even when the form carries a real heading — renaming the title in
+// the editor doesn't always rename the file — so it must never beat a real
+// title. Keep in sync with chrome-extension/content.js and js/gate.js.
+const PLACEHOLDER_TITLE_RE = /^untitled(\s+form)?$/i;
 
-  const m = html.match(/<title[^>]*>([^<]*)<\/title>/i);
-  if (m) return m[1].replace(/\s*-\s*Google Forms\s*$/, '').trim();
+function isPlaceholderTitle(s) {
+  return PLACEHOLDER_TITLE_RE.test((s || '').toString().trim());
+}
+
+// First candidate that's a real title. Everything empty or placeholder → ''
+// (the form genuinely has no title; callers show their own wording).
+function pickTitle(...candidates) {
+  for (const c of candidates) {
+    const t = typeof c === 'string' ? c.trim() : '';
+    if (t && !isPlaceholderTitle(t)) return t;
+  }
   return '';
+}
+
+function extractTitle(html, data) {
+  // data[1][8] is the heading rendered at the top of the form — what a visitor
+  // actually reads — and data[1][25][1] mirrors it. data[3] is the Drive file
+  // name, which drifts from the heading, so it ranks below the page <title>.
+  const m = html.match(/<title[^>]*>([^<]*)<\/title>/i);
+  const docTitle = m ? decodeEntities(m[1]).replace(/\s*-\s*Google Forms\s*$/, '') : '';
+  return pickTitle(data?.[1]?.[8], data?.[1]?.[25]?.[1], docTitle, data?.[3]);
+}
+
+// The <title> path is HTML-escaped (a form named "Q&A" arrives as "Q&amp;A").
+function decodeEntities(s) {
+  return s.replace(/&(amp|lt|gt|quot|#0?39|apos);/g, (_, e) => ({
+    amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'", '#039': "'", apos: "'",
+  }[e] || _));
 }
 
 // Walk the HTML to capture the FB_PUBLIC_LOAD_DATA_ array literal by counting

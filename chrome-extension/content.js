@@ -114,6 +114,19 @@
   // parser reads (netlify/functions/parse-form.js) — keep the two in sync.
   const CHOICE_TYPES = new Set([2, 3, 4, 5, 7]); // mc, dropdown, checkbox, scale, grid
 
+  // Google's name for a form whose Drive file was never named — never a title
+  // worth showing. Keep in sync with netlify/functions/parse-form.js.
+  const PLACEHOLDER_TITLE_RE = /^untitled(\s+form)?$/i;
+
+  // First candidate that's a real title; '' if the form genuinely has none.
+  function pickTitle(...candidates) {
+    for (const c of candidates) {
+      const t = typeof c === 'string' ? c.trim() : '';
+      if (t && !PLACEHOLDER_TITLE_RE.test(t)) return t;
+    }
+    return '';
+  }
+
   function extractFbBlob(text) {
     const idx = text.indexOf('FB_PUBLIC_LOAD_DATA_');
     if (idx === -1) return null;
@@ -177,7 +190,10 @@
       const questions = data?.[1]?.[1];
       if (!Array.isArray(questions)) continue;
       fields = questions.flatMap(questionToFields);
-      title = (typeof data[3] === 'string' && data[3]) || (typeof data?.[1]?.[8] === 'string' && data[1][8]) || '';
+      // data[1][8] is the heading rendered on the form (data[1][25][1] mirrors
+      // it); data[3] is the Drive file name, which is often still "Untitled
+      // form" on a form with a real heading, so it ranks last.
+      title = pickTitle(data?.[1]?.[8], data?.[1]?.[25]?.[1], data[3]);
       break;
     }
     if (!fields.length) {
@@ -192,7 +208,7 @@
         }
       }
     }
-    if (!title) title = document.title.replace(/\s*-\s*Google Forms\s*$/, '').trim();
+    if (!title) title = pickTitle(document.title.replace(/\s*-\s*Google Forms\s*$/, ''));
     if (!fields.length) return null;
     return {
       v: 1,

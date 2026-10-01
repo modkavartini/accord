@@ -148,8 +148,21 @@ function readHashSchema() {
 }
 
 // ─── Form schema cache (form_schemas/{formId}) ────────────────────────────
+// Google's name for a form whose Drive file was never named. Parsers used to
+// prefer it over the form's real heading, so cached docs can still carry it —
+// never show it, and re-resolve such a doc so the fixed parser replaces it.
+// Keep in sync with netlify/functions/parse-form.js.
+const PLACEHOLDER_TITLE_RE = /^untitled(\s+form)?$/i;
+const realTitle = t => {
+  const s = (t || '').toString().trim();
+  return s && !PLACEHOLDER_TITLE_RE.test(s) ? s : '';
+};
+
 function schemaIsFresh(doc) {
   if (!doc) return false;
+  // A placeholder title means the doc predates the title fix. An empty title
+  // is fine — that's a form with no heading of its own.
+  if (doc.title && !realTitle(doc.title)) return false;
   if (doc.source === 'extension') return true;
   const t = doc.updatedAt instanceof Date ? doc.updatedAt.getTime() : 0;
   return Date.now() - t < SCHEMA_TTL_MS;
@@ -160,7 +173,7 @@ function useSchemaDoc(doc, source) {
     source,
     formId:  doc.formId,
     formUrl: doc.formUrl || `https://docs.google.com/forms/d/e/${doc.formId}/viewform`,
-    name:    resolved?.name || doc.title || 'this form',
+    name:    resolved?.name || realTitle(doc.title) || 'this form',
     fields:  normalizeFields(doc.fields),
   };
   fallbackUrl = resolved.formUrl;
@@ -170,7 +183,9 @@ function useSchemaDoc(doc, source) {
 function queueSchemaWrite(formId, formUrl, title, fields, source, extra = {}) {
   pendingSchemaWrite = {
     formId,
-    doc: { formId, formUrl, title: title || '', fields, source, updatedAt: new Date(), ...extra },
+    // realTitle, not `title || ''`: an older extension build can still hand us
+    // Google's "Untitled form" file name, which must not re-enter the cache.
+    doc: { formId, formUrl, title: realTitle(title), fields, source, updatedAt: new Date(), ...extra },
   };
   flushSchemaWrite();
 }
@@ -372,7 +387,7 @@ function useParsed(parsed) {
     source:  resolved?.source || 'formId',
     formId:  parsed.formId || resolved?.formId || extractFormId(parsed.formUrl),
     formUrl: parsed.formUrl || resolved?.formUrl,
-    name:    resolved?.name || parsed.title || 'this form',
+    name:    resolved?.name || realTitle(parsed.title) || 'this form',
     fields:  parsed.fields,
   };
   fallbackUrl = resolved.formUrl;
@@ -608,8 +623,12 @@ async function doRedirect(user) {
   ])).catch(() => {});
 
   // Native app: record this fill in on-device history before we hand off.
+  // 'this form' is our display wording for a form with no title of its own —
+  // send '' so the app's history applies its own label instead of listing it
+  // under "this form".
   try {
-    window.AccordBridge?.recordFill?.(resolved.name || '', resolved.formId || '', url);
+    const name = resolved.name === 'this form' ? '' : (resolved.name || '');
+    window.AccordBridge?.recordFill?.(name, resolved.formId || '', url);
   } catch {}
 
   // Just long enough for the "Redirecting to form…" spinner to register.
