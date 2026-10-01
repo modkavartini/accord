@@ -51,5 +51,9 @@ keystore.properties
 # Reader Pi secrets (the token lives in Netlify env + on the Pi, never in git)
 reader-pi/reader.env
 
+# Local-only notes: release mechanics, signing, reader infra, env values.
+# Deliberately not public — the README describes behaviour, not operations.
+*.local.md
+
 # Chrome extension build output
 chrome-extension/dist/
