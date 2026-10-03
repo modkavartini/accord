@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<!-- Source for both preview images. Same artwork, two renders:
+
+       (no param)  public/social-preview.png   GitHub repo → Settings → Social preview
+       ?v=og       public/og-image.jpg         <meta property="og:image"> for the site
+
+     The og variant is 1200×630 with larger type and one fewer field: a link
+     preview renders ~300px wide in a WhatsApp thread, where the GitHub-sized
+     text is unreadable. Render commands at the bottom of this file. -->
+<html>
+<head>
+<meta charset="utf-8">
+<script>
+  // Must run before paint so the variant is in place for the first frame.
+  if (new URLSearchParams(location.search).get('v') === 'og') {
+    document.documentElement.className = 'og';
+  }
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Urbanist:wght@300;400;500&family=Space+Mono:wght@400&display=block">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #080808;
+    --glass: rgba(255,255,255,0.04);
+    --glass-border: rgba(255,255,255,0.08);
+    --text: #f0f0f0;
+    --text-dim: rgba(240,240,240,0.5);
+    --text-muted: rgba(240,240,240,0.25);
+    --mono: 'Space Mono', monospace;
+    --logo: 'Cormorant Garamond', Georgia, serif;
+    --body: 'Urbanist', sans-serif;
+  }
+
+  html, body { width: 1280px; height: 640px; overflow: hidden; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 72px;
+    padding: 0 84px;
+  }
+
+  /* Ambient light, same two-orb treatment the site uses */
+  .orb { position: absolute; border-radius: 50%; filter: blur(90px); pointer-events: none; }
+  .orb-a { width: 620px; height: 620px; top: -260px; left: -180px; background: rgba(255,255,255,0.055); }
+  .orb-b { width: 520px; height: 520px; bottom: -240px; right: -120px; background: rgba(255,255,255,0.035); }
+
+  /* Noise texture, lifted from css/style.css */
+  body::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+
+  .left  { position: relative; z-index: 1; width: 560px; flex: none; }
+  .right { position: relative; z-index: 1; flex: 1; display: flex; justify-content: flex-end; }
+
+  .mark {
+    width: 76px; height: 76px;
+    border-radius: 17px;
+    background: var(--text);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 30px;
+  }
+  .mark span {
+    font-family: var(--logo);
+    font-style: italic; font-weight: 500;
+    font-size: 56px; line-height: 1;
+    color: var(--bg);
+    letter-spacing: -1px;
+    transform: translateY(-3px);
+  }
+
+  h1 {
+    font-family: var(--logo);
+    font-weight: 600;
+    font-size: 86px;
+    line-height: 0.95;
+    letter-spacing: -1.5px;
+    margin-bottom: 22px;
+  }
+
+  .tagline {
+    font-weight: 300;
+    font-size: 25px;
+    line-height: 1.45;
+    color: var(--text-dim);
+    max-width: 480px;
+    margin-bottom: 40px;
+  }
+
+  .surfaces {
+    font-family: var(--mono);
+    font-size: 14px;
+    letter-spacing: 1.4px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+  .surfaces span { color: rgba(240,240,240,0.18); margin: 0 10px; }
+
+  /* The form card: what Accord actually hands you */
+  .card {
+    width: 400px;
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 26px 28px 30px;
+    backdrop-filter: blur(10px);
+  }
+  .card-head {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1.6px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    padding-bottom: 16px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--glass-border);
+  }
+
+  .field { margin-bottom: 18px; }
+  .field:last-child { margin-bottom: 0; }
+  .label {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text-muted);
+    margin-bottom: 7px;
+  }
+  .value {
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--text);
+    padding: 9px 13px;
+    border-radius: 9px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--glass-border);
+    border-left: 2px solid rgba(240,240,240,0.55);
+  }
+  /* The question Accord has no rule for — left alone, not guessed at */
+  .value.empty {
+    color: var(--text-muted);
+    border-left: 1px solid var(--glass-border);
+    background: rgba(255,255,255,0.02);
+  }
+
+  /* ── og variant ─────────────────────────────────────────────────────────────
+     Chat clients shrink a link preview to roughly a quarter of its width, so
+     everything that carries meaning grows and the card loses a row.          */
+  html.og, html.og body { width: 1200px; height: 630px; }
+  html.og body       { gap: 56px; padding: 0 76px; }
+  html.og .left      { width: 572px; }
+  html.og .mark      { width: 88px; height: 88px; border-radius: 20px; margin-bottom: 32px; }
+  html.og .mark span { font-size: 65px; }
+  html.og h1         { font-size: 104px; margin-bottom: 24px; }
+  html.og .tagline   { font-size: 31px; max-width: 545px; margin-bottom: 42px; }
+  html.og .surfaces  { font-size: 17px; letter-spacing: 1.7px; }
+  html.og .card      { width: 428px; padding: 28px 30px 32px; }
+  html.og .card-head { font-size: 13px; padding-bottom: 18px; margin-bottom: 22px; }
+  html.og .field     { margin-bottom: 22px; }
+  html.og .label     { font-size: 15px; margin-bottom: 8px; }
+  html.og .value     { font-size: 19px; padding: 11px 15px; border-radius: 10px; }
+  /* Four fields is one too many once the type is this large. */
+  html.og .field.trim { display: none; }
+</style>
+</head>
+<body>
+  <div class="orb orb-a"></div>
+  <div class="orb orb-b"></div>
+
+  <div class="left">
+    <div class="mark"><span>a.</span></div>
+    <h1>Accord</h1>
+    <p class="tagline">Auto-fill any Google Form with details you&rsquo;ve saved once.</p>
+    <div class="surfaces">Chrome<span>&middot;</span>Android<span>&middot;</span>Web</div>
+  </div>
+
+  <div class="right">
+    <div class="card">
+      <div class="card-head">Registration</div>
+
+      <div class="field">
+        <div class="label">Full name</div>
+        <div class="value">Alex Menon</div>
+      </div>
+
+      <div class="field">
+        <div class="label">Email</div>
+        <div class="value">alex.menon@college.edu</div>
+      </div>
+
+      <div class="field trim">
+        <div class="label">Department / Branch</div>
+        <div class="value">Computer Science</div>
+      </div>
+
+      <div class="field">
+        <div class="label">Why do you want to attend?</div>
+        <div class="value empty">Your answer</div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // Signal to the renderer that webfonts have settled.
+  document.fonts.ready.then(() => { document.title = 'ready'; });
+</script>
+</body>
+</html>
+
+<!--
+Render (headless Chrome at 2× for crisp text, then downsample):
+
+  # GitHub social preview — 1280×640, PNG
+  chrome --headless=new --hide-scrollbars --force-device-scale-factor=2 \
+         --window-size=1280,640 --virtual-time-budget=12000 \
+         --screenshot=sp@2x.png tools/social-preview.html
+  magick sp@2x.png -resize 1280x640 -strip public/social-preview.png
+
+  # Site link preview (og:image) — 1200×630, JPEG. Chat clients skip images
+  # over a few hundred KB; the film-grain texture makes PNG far heavier here.
+  chrome --headless=new --hide-scrollbars --force-device-scale-factor=2 \
+         --window-size=1200,630 --virtual-time-budget=12000 \
+         --screenshot=og@2x.png "tools/social-preview.html?v=og"
+  magick og@2x.png -resize 1200x630 -strip -quality 88 public/og-image.jpg
+-->
