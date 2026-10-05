@@ -110,6 +110,10 @@
     }
 
     /* Proud social-proof line — "2k+ people…" */
+    /* Needs the attribute selector: a bare `.hero-stat { display }` from the
+       author sheet beats the UA stylesheet's [hidden] { display: none }, so the
+       line would render with an empty number whenever the count can't load. */
+    .hero-stat[hidden] { display: none; }
     .hero-stat {
       display: inline-flex;
       align-items: baseline;
